@@ -1,5 +1,3 @@
-Cześć! Oto gotowe przykłady zapytań (JSON) do skopiowania i wklejenia w Swaggerze. 
-Z racji wprowadzonych poprawek, pola "id" są przed Tobą ukryte (i prawidłowo, o ich generowanie dba baza danych).
 
 =======================================================
 1. REJESTRACJA KONTA (POST /api/auth/register)
