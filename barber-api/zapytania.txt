@@ -1,0 +1,71 @@
+Cześć! Oto gotowe przykłady zapytań (JSON) do skopiowania i wklejenia w Swaggerze. 
+Z racji wprowadzonych poprawek, pola "id" są przed Tobą ukryte (i prawidłowo, o ich generowanie dba baza danych).
+
+=======================================================
+1. REJESTRACJA KONTA (POST /api/auth/register)
+=======================================================
+{
+  "email": "nowyklient@example.com",
+  "password": "superhaslo123",
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "phone": "123456789"
+}
+
+
+=======================================================
+2. LOGOWANIE DO SYSTEMU (POST /api/auth/login)
+=======================================================
+{
+  "email": "nowyklient@example.com",
+  "password": "superhaslo123"
+}
+
+
+=======================================================
+3. DODAWANIE NOWEJ USŁUGI (POST /api/services)
+=======================================================
+{
+  "name": "Strzyżenie Combo (Włosy + Broda)",
+  "price": 120.0,
+  "durationInMin": 60
+}
+
+
+=======================================================
+4. EDYCJA ISTNIEJĄCEJ USŁUGI (PUT /api/services/{id})
+=======================================================
+(Podaj ID dodanej wcześniej usługi w ścieżce url)
+{
+  "name": "Strzyżenie Combo VIP",
+  "price": 150.0,
+  "durationInMin": 75
+}
+
+
+=======================================================
+5. DODAWANIE REZERWACJI/WIZYTY (POST /api/appointments)
+=======================================================
+(Zawiera przykładowe ID wygenerowane z Twojego DataInitializer: 
+barber id 2, klient id 4, usługa id 1)
+
+{
+  "dateTime": "2026-04-15T14:30:00",
+  "barber": {
+    "id": 2
+  },
+  "client": {
+    "id": 4
+  },
+  "service": {
+    "id": 1
+  }
+}
+
+
+=======================================================
+6. LOKALIZACJA ZMIANY STATUSU WIZYTY (PATCH /api/appointments/{id}/status)
+=======================================================
+{
+  "status": "CONFIRMED"
+}

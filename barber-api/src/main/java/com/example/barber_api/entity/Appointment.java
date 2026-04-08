@@ -1,5 +1,7 @@
 package com.example.barber_api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -9,6 +11,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "appointments")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Appointment {
     
     /**
@@ -16,6 +19,7 @@ public class Appointment {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
     /**
