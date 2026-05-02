@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Panel Barbera</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+    <h1>Witaj, <span th:text="${barber.name}"></span> (Barber)</h1>
+    <form th:action="@{/logout}" method="post">
+        <input type="submit" value="Wyloguj"/>
+    </form>
+
+    <h2>Ustaw godziny i dni pracy</h2>
+    <div th:if="${param.hoursUpdated}">
+        <p class="success">Ustawienia pracy zostały zaktualizowane!</p>
+    </div>
+    <form th:action="@{/barber/updateHours}" method="post">
+        <label>Godzina rozpoczęcia pracy:
+            <select name="workStartHour">
+                <option th:each="i : ${#numbers.sequence(0, 23)}" th:value="${i}"
+                        th:text="${i} + ':00'"
+                        th:selected="${barber.workStartHour != null && barber.workStartHour == i}"></option>
+            </select>
+        </label>
+        <label>Godzina zakończenia pracy:
+            <select name="workEndHour">
+                <option th:each="i : ${#numbers.sequence(1, 24)}" th:value="${i}"
+                        th:text="${i} + ':00'"
+                        th:selected="${barber.workEndHour != null && barber.workEndHour == i}"></option>
+            </select>
+        </label>
+        <fieldset>
+            <legend>Dni pracy:</legend>
+            <label><input type="checkbox" name="workDays" value="1" th:checked="${barber.workDays != null && barber.workDays.contains('1')}"/> Poniedziałek</label>
+            <label><input type="checkbox" name="workDays" value="2" th:checked="${barber.workDays != null && barber.workDays.contains('2')}"/> Wtorek</label>
+            <label><input type="checkbox" name="workDays" value="3" th:checked="${barber.workDays != null && barber.workDays.contains('3')}"/> Środa</label>
+            <label><input type="checkbox" name="workDays" value="4" th:checked="${barber.workDays != null && barber.workDays.contains('4')}"/> Czwartek</label>
+            <label><input type="checkbox" name="workDays" value="5" th:checked="${barber.workDays != null && barber.workDays.contains('5')}"/> Piątek</label>
+            <label><input type="checkbox" name="workDays" value="6" th:checked="${barber.workDays != null && barber.workDays.contains('6')}"/> Sobota</label>
+            <label><input type="checkbox" name="workDays" value="7" th:checked="${barber.workDays != null && barber.workDays.contains('7')}"/> Niedziela</label>
+        </fieldset>
+        <input type="submit" value="Zapisz ustawienia"/>
+    </form>
+    <p th:if="${barber.workStartHour != null && barber.workEndHour != null}">
+        Aktualne godziny pracy: <span th:text="${barber.workStartHour}"></span>:00 - <span th:text="${barber.workEndHour}"></span>:00
+    </p>
+    <p th:if="${barber.workDays != null && !barber.workDays.isEmpty()}">
+        Dni pracy: <span th:text="${barber.workDays.replace('1','Pn ').replace('2','Wt ').replace('3','Śr ').replace('4','Cz ').replace('5','Pt ').replace('6','So ').replace('7','Nd ').replace(',','')}"></span>
+    </p>
+    <p th:if="${barber.workStartHour == null || barber.workEndHour == null}">
+        Godziny pracy nie zostały jeszcze ustawione.
+    </p>
+
+    <h2>Twój harmonogram</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Klient</th>
+                <th>Usługa</th>
+                <th>Czas trwania</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="v : ${appointments}">
+                <td th:text="${v.appointmentDate}"></td>
+                <td th:text="${v.client != null ? v.client.name : 'brak danych'}"></td>
+                <td th:text="${v.serviceType}"></td>
+                <td th:text="${v.durationMinutes} + ' min'"></td>
+                <td>
+                    <form th:action="@{/barber/appointment/delete/{id}(id=${v.id})}" method="post">
+                        <input type="submit" value="Anuluj"/>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Wszystkie zapisy (wszystkich Barberów)</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Barber</th>
+                <th>Klient</th>
+                <th>Usługa</th>
+                <th>Czas trwania</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="v : ${allAppointments}">
+                <td th:text="${v.appointmentDate}"></td>
+                <td th:text="${v.barber != null ? v.barber.name : 'brak danych'}"></td>
+                <td th:text="${v.client != null ? v.client.name : 'brak danych'}"></td>
+                <td th:text="${v.serviceType}"></td>
+                <td th:text="${v.durationMinutes} + ' min'"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

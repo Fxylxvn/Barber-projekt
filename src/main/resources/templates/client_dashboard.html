@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Panel Klienta</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+    <h1>Witaj, <span th:text="${user.name}"></span> (Klient)</h1>
+    <form th:action="@{/logout}" method="post">
+        <input type="submit" value="Wyloguj"/>
+    </form>
+
+    <h2>Umów wizytę</h2>
+    <div th:if="${param.error != null && #arrays.contains(param.error, 'Zajete')}">
+        <p class="error">Barber jest zajęty w tym terminie! Wybierz inną godzinę.</p>
+    </div>
+    <div th:if="${param.error != null && #arrays.contains(param.error, 'PozaGodzinami')}">
+        <p class="error">Wybrana godzina jest poza godzinami pracy barbera!</p>
+    </div>
+    <div th:if="${param.error != null && #arrays.contains(param.error, 'DzienWolny')}">
+        <p class="error">Barber nie pracuje w wybranym dniu tygodnia!</p>
+    </div>
+    <div th:if="${param.error != null && #arrays.contains(param.error, 'NieprawidlowaMinuta')}">
+        <p class="error">Minuty muszą być wielokrotnością 15 (np. 00, 15, 30, 45)!</p>
+    </div>
+    <div th:if="${param.success != null}">
+        <p class="success">Umówiono pomyślnie!</p>
+    </div>
+
+    <form th:action="@{/client/book}" method="post" id="bookingForm">
+        <label>Barber:
+            <select name="barberId" id="barberSelect">
+                <option th:each="b : ${barbers}" th:value="${b.id}"
+                        th:data-start="${b.workStartHour}"
+                        th:data-end="${b.workEndHour}"
+                        th:data-days="${b.workDays}"
+                        th:text="${b.name} + (${b.workStartHour != null && b.workEndHour != null} ? ' (Godz: ' + ${b.workStartHour} + ':00 - ' + ${b.workEndHour} + ':00)' : ' (Brak ustalonych godzin)')">
+                </option>
+            </select>
+        </label>
+        <label>Usługa:
+            <select name="serviceType" required>
+                <option value="Włosy">Włosy (45 min) - 50 zł</option>
+                <option value="Broda">Broda (30 min) - 35 zł</option>
+                <option value="Włosy + Broda">Włosy + Broda (75 min) - 75 zł</option>
+                <option value="Klata">Klata (15 min) - 20 zł</option>
+                <option value="Wszystko">Wszystko (90 min) - 120 zł</option>
+            </select>
+        </label>
+        <label>Data:
+            <input type="date" name="dateOnly" id="dateOnly" required/>
+        </label>
+        <label>Godzina:
+            <select name="timeOnly" id="timeOnly" required>
+                <option value="">-- Wybierz godzinę --</option>
+            </select>
+        </label>
+        <input type="hidden" name="date" id="fullDateTime"/>
+        <input type="submit" value="Umów"/>
+    </form>
+
+    <script>
+        const barberSelect = document.getElementById('barberSelect');
+        const dateOnly = document.getElementById('dateOnly');
+        const timeOnly = document.getElementById('timeOnly');
+        const fullDateTime = document.getElementById('fullDateTime');
+        const form = document.getElementById('bookingForm');
+
+        const dayNames = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+
+        function updateTimeOptions() {
+            const selectedBarber = barberSelect.options[barberSelect.selectedIndex];
+            const startHour = parseInt(selectedBarber.dataset.start) || 0;
+            const endHour = parseInt(selectedBarber.dataset.end) || 24;
+
+            timeOnly.innerHTML = '<option value="">-- Wybierz godzinę --</option>';
+
+            for (let hour = startHour; hour < endHour; hour++) {
+                for (let minute = 0; minute < 60; minute += 15) {
+                    const timeStr = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+                    const option = document.createElement('option');
+                    option.value = timeStr;
+                    option.textContent = timeStr;
+                    timeOnly.appendChild(option);
+                }
+            }
+        }
+
+        function updateFullDateTime() {
+            if (dateOnly.value && timeOnly.value) {
+                fullDateTime.value = dateOnly.value + 'T' + timeOnly.value;
+            }
+        }
+
+        function validateWorkDay() {
+            if (!dateOnly.value) return true;
+
+            const selectedBarber = barberSelect.options[barberSelect.selectedIndex];
+            const workDays = selectedBarber.dataset.days;
+
+            if (!workDays) return true;
+
+            const selectedDate = new Date(dateOnly.value);
+            let jsDayOfWeek = selectedDate.getDay();
+            let javaDayOfWeek = jsDayOfWeek === 0 ? 7 : jsDayOfWeek;
+
+            if (!workDays.includes(String(javaDayOfWeek))) {
+                const dayName = dayNames[jsDayOfWeek];
+                alert('Barber nie pracuje w ' + dayName + '! Proszę wybrać inny dzień.');
+                return false;
+            }
+            return true;
+        }
+
+        barberSelect.addEventListener('change', updateTimeOptions);
+        dateOnly.addEventListener('change', function() {
+            validateWorkDay();
+            updateFullDateTime();
+        });
+        timeOnly.addEventListener('change', updateFullDateTime);
+
+        form.addEventListener('submit', function(e) {
+            if (!validateWorkDay()) {
+                e.preventDefault();
+                return false;
+            }
+            updateFullDateTime();
+            if (!fullDateTime.value) {
+                e.preventDefault();
+                alert('Proszę wybrać datę i godzinę.');
+                return false;
+            }
+        });
+
+        updateTimeOptions();
+    </script>
+
+    <h2>Twoje Wizyty</h2>
+    <ul>
+        <li th:each="v : ${appointments}">
+            <span th:text="${v.appointmentDate}"></span> -
+            Barber: <span th:text="${v.barber != null ? v.barber.name : 'Nieznany'}"></span> -
+            Usługa: <span th:text="${v.serviceType}"></span>
+            (<span th:text="${v.durationMinutes}"></span> min)
+        </li>
+    </ul>
+</body>
+</html>
