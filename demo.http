@@ -30,3 +30,41 @@ Content-Type: application/json
 ### Demonstracja weryfikacji tokena i odczytu roli
 GET http://localhost:8080/api/demo/verify-token
 Authorization: Bearer {{auth_token}}
+
+### Rejestracja użytkownika z rolą BARBER (demo)
+POST http://localhost:8080/api/auth/register-role
+Content-Type: application/json
+
+{
+  "username": "barberUser",
+  "password": "barberPass",
+  "email": "barber@example.com",
+  "firstName": "Barber",
+  "lastName": "Demo",
+  "role": "BARBER"
+}
+
+### Logowanie użytkownika BARBER (generowanie tokena)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "barberUser",
+  "password": "barberPass"
+}
+
+> {%
+    client.global.set("auth_token_barber", response.body.token);
+%}
+
+### Wywołanie chronionego endpointu `/api/tasks` jako KLIENT (powinno zawrócić tylko swoje zadania)
+GET http://localhost:8080/api/tasks
+Authorization: Bearer {{auth_token}}
+
+### Wywołanie chronionego endpointu `/api/tasks` jako BARBER (może zobaczyć więcej)
+GET http://localhost:8080/api/tasks
+Authorization: Bearer {{auth_token_barber}}
+
+### Wywołanie chronionego endpointu `/api/reservations` jako BARBER
+GET http://localhost:8080/api/reservations
+Authorization: Bearer {{auth_token_barber}}

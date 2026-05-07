@@ -18,6 +18,9 @@ public class User {
     private String password;
     private String role;
     private String name;
+    private String email;
+    private String firstName;
+    private String lastName;
 
     private Integer workStartHour;
     private Integer workEndHour;

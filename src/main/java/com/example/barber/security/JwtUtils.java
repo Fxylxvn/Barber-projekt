@@ -65,6 +65,37 @@ Sprawdza, czy token JWT jest wazny, uzywany jest podczas kazdego zadania HTTP do
 Serwer musi wiedziec, czy ten token jest w porzadku
 
  */
+
+    public java.util.List<String> getRolesFromJwtToken(String token) {
+        // Wyciągnij role bezpośrednio z claim'a tokenu JWT
+        var claims = Jwts.parser()
+                .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        Object rolesObj = claims.get("roles");
+        if (rolesObj instanceof java.util.List) {
+            return (java.util.List<String>) rolesObj;
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    public java.util.Map<String, Object> getClaimsFromJwtToken(String token) {
+        // Zwróć wszystkie claims z tokenu JWT
+        var claims = Jwts.parser()
+                .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("username", claims.getSubject());
+        result.put("roles", claims.get("roles"));
+        result.put("issuedAt", claims.getIssuedAt());
+        result.put("expiration", claims.getExpiration());
+        return result;
+    }
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parser().verifyWith((javax.crypto.SecretKey) getSigningKey()).build().parseSignedClaims(authToken);
