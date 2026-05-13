@@ -20,6 +20,7 @@ public class MainController {
 
     private final UserRepo userRepo;
     private final AppointmentRepo appointmentRepo;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final Map<String, Integer> SERVICE_DURATION = Map.of(
         "Włosy", 45,
@@ -37,9 +38,10 @@ public class MainController {
         "Wszystko", 120
     );
 
-    public MainController(UserRepo userRepo, AppointmentRepo appointmentRepo) {
+    public MainController(UserRepo userRepo, AppointmentRepo appointmentRepo, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.appointmentRepo = appointmentRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping("/")
@@ -67,6 +69,7 @@ public class MainController {
     @PostMapping("/register")
     public String registerUser(@ModelAttribute User user) {
         user.setRole("KLIENT");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepo.save(user);
         return "redirect:/login";
     }

@@ -10,12 +10,12 @@ import org.springframework.context.annotation.Configuration;
 public class DataLoader {
 
     @Bean
-    public CommandLineRunner loadData(UserRepo repo) {
+    public CommandLineRunner loadData(UserRepo repo, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         return args -> {
             if (repo.count() == 0) {
                 User b1 = new User();
                 b1.setUsername("barber1");
-                b1.setPassword("pass");
+                b1.setPassword(passwordEncoder.encode("pass"));
                 b1.setRole("BARBER");
                 b1.setName("Janusz");
                 b1.setWorkStartHour(8);
@@ -25,14 +25,14 @@ public class DataLoader {
 
                 User k1 = new User();
                 k1.setUsername("klient1");
-                k1.setPassword("pass");
+                k1.setPassword(passwordEncoder.encode("pass"));
                 k1.setRole("KLIENT");
                 k1.setName("Mirek");
                 repo.save(k1);
 
                 User b2 = new User();
                 b2.setUsername("barber2");
-                b2.setPassword("pass");
+                b2.setPassword(passwordEncoder.encode("pass"));
                 b2.setRole("BARBER");
                 b2.setName("Andrzej");
                 b2.setWorkStartHour(10);
@@ -42,14 +42,14 @@ public class DataLoader {
 
                 User k2 = new User();
                 k2.setUsername("klient2");
-                k2.setPassword("pass");
+                k2.setPassword(passwordEncoder.encode("pass"));
                 k2.setRole("KLIENT");
                 k2.setName("Zbyszek");
                 repo.save(k2);
 
                 User b3 = new User();
                 b3.setUsername("barber3");
-                b3.setPassword("pass");
+                b3.setPassword(passwordEncoder.encode("pass"));
                 b3.setRole("BARBER");
                 b3.setName("Krzysztof");
                 b3.setWorkStartHour(9);
@@ -59,7 +59,7 @@ public class DataLoader {
 
                 User b4 = new User();
                 b4.setUsername("barber4");
-                b4.setPassword("pass");
+                b4.setPassword(passwordEncoder.encode("pass"));
                 b4.setRole("BARBER");
                 b4.setName("Wojciech");
                 b4.setWorkStartHour(12);
@@ -69,21 +69,21 @@ public class DataLoader {
 
                 User k3 = new User();
                 k3.setUsername("klient3");
-                k3.setPassword("pass");
+                k3.setPassword(passwordEncoder.encode("pass"));
                 k3.setRole("KLIENT");
                 k3.setName("Adam");
                 repo.save(k3);
 
                 User k4 = new User();
                 k4.setUsername("klient4");
-                k4.setPassword("pass");
+                k4.setPassword(passwordEncoder.encode("pass"));
                 k4.setRole("KLIENT");
                 k4.setName("Piotr");
                 repo.save(k4);
 
                 User k5 = new User();
                 k5.setUsername("klient5");
-                k5.setPassword("pass");
+                k5.setPassword(passwordEncoder.encode("pass"));
                 k5.setRole("KLIENT");
                 k5.setName("Tomasz");
                 repo.save(k5);
