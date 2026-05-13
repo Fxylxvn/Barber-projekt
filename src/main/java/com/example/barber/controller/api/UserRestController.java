@@ -13,9 +13,11 @@ import java.util.List;
 public class UserRestController {
 
     private final UserRepo userRepo;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserRestController(UserRepo userRepo) {
+    public UserRestController(UserRepo userRepo, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping
@@ -38,7 +40,7 @@ public class UserRestController {
             user.setUsername(userDetails.getUsername());
             // In a real app, hash the password if changed
             if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
-                user.setPassword(userDetails.getPassword());
+                user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
             }
             return ResponseEntity.ok(userRepo.save(user));
         }).orElse(ResponseEntity.notFound().build());
