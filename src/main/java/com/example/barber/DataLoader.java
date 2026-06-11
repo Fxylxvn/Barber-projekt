@@ -8,9 +8,38 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Klasa ładująca dane startowe (seed data) do bazy danych przy uruchomieniu aplikacji.
+ *
+ * <p>Wykonywana automatycznie przy starcie Spring Boot dzięki implementacji
+ * {@link CommandLineRunner}. Działa na zasadzie "idempotentnej" inicjalizacji:
+ * dane są dodawane tylko wtedy, gdy baza jest pusta, dzięki czemu wielokrotne
+ * uruchamianie aplikacji nie duplikuje rekordów.</p>
+ *
+ * <p>Tworzy:
+ * <ul>
+ *   <li>Konto testowe klienta ({@code login@klient.pl} / {@code test1234}).</li>
+ *   <li>Konto testowe barbera ({@code login@barber.pl} / {@code test1234}) z pełnym profilem.</li>
+ *   <li>Dodatkowych 5 barberów (barber1–barber5) i 3 klientów testowych.</li>
+ *   <li>9 początkowych stylów inspiracji (fryzury i zarosty) z linkami do zdjęć.</li>
+ * </ul>
+ * </p>
+ */
 @Configuration
 public class DataLoader {
 
+    /**
+     * Tworzy i rejestruje bean {@link CommandLineRunner}, który ładuje dane startowe.
+     *
+     * <p>Metoda jest wykonywana raz po uruchomieniu całego kontekstu Spring.
+     * Sprawdza, czy tabela {@code users} jest pusta przed dodaniem danych –
+     * chroni to przed duplikacją przy ponownym uruchomieniu aplikacji.</p>
+     *
+     * @param repo                repozytorium użytkowników do zapisu kont testowych
+     * @param passwordEncoder     koder BCrypt do hashowania haseł testowych
+     * @param inspirationStyleRepo repozytorium styli inspiracji do zapisu domyślnych styli
+     * @return lambda {@link CommandLineRunner} wykonywana przy starcie aplikacji
+     */
     @Bean
     public CommandLineRunner loadData(UserRepo repo, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder, InspirationStyleRepo inspirationStyleRepo) {
         return args -> {
@@ -147,6 +176,7 @@ public class DataLoader {
                 repo.save(k3);
             }
 
+            // Załaduj domyślne style inspiracji (fryzury i zarosty) jeśli tabela jest pusta
             if (inspirationStyleRepo.count() == 0) {
                 String[][] initialStyles = {
                     {"Low Skin Fade", "hair", "https://images.unsplash.com/photo-1599351431247-f579338ae7f6?w=300"},
