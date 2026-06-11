@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${barber.name} + ' - GENTLEMAN\'S BARBER CLUB'"></title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <style>
+        .info-container {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        .barber-profile-card {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 48px;
+            box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.8), 0 0 30px var(--gold-glow);
+        }
+        .profile-left {
+            flex-shrink: 0;
+            width: 250px;
+            text-align: center;
+        }
+        .profile-left img {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--gold);
+            box-shadow: 0 0 20px var(--gold-glow-strong);
+            margin-bottom: 20px;
+        }
+        .profile-right {
+            flex: 1;
+        }
+        .profile-name {
+            font-family: var(--font-serif);
+            font-size: 38px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+        }
+        .profile-title {
+            font-size: 14px;
+            color: var(--gold);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+        .profile-rating {
+            font-size: 16px;
+            color: #ffb800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 24px;
+            background: rgba(255, 184, 0, 0.05);
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 184, 0, 0.1);
+            display: inline-flex;
+        }
+        .profile-bio {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 36px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 24px;
+        }
+        .info-item h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .info-item p {
+            color: var(--text-light);
+            font-size: 15px;
+        }
+        @media (max-width: 768px) {
+            .barber-profile-card {
+                flex-direction: column;
+                align-items: center;
+                padding: 30px;
+                text-align: center;
+            }
+            .profile-left {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="info-container">
+        <!-- Logo Branding at Top -->
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 class="logo-title" style="font-size: 32px; color:#fff;">GENTLEMAN'S</h1>
+            <h2 class="logo-subtitle" style="font-size: 14px; color:var(--gold); letter-spacing: 8px; margin-top: 4px;">BARBER CLUB</h2>
+        </div>
+
+        <!-- Barber Details Card -->
+        <div class="barber-profile-card">
+            <div class="profile-left">
+                <img th:src="${barber.photoUrl != null ? barber.photoUrl : 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300'}" alt="Photo"/>
+                <div>
+                    <span class="profile-rating">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <span th:text="${barber.rating != null ? barber.rating : '5.0'}"></span> / 5.0
+                    </span>
+                </div>
+            </div>
+            <div class="profile-right">
+                <h1 class="profile-name" th:text="${barber.name}"></h1>
+                <p class="profile-title" th:text="${barber.title}"></p>
+                <p class="profile-bio" th:text="${barber.bio != null ? barber.bio : 'Brak szczegółowego opisu o tym barberze.'}"></p>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4>Godziny Pracy</h4>
+                        <p th:text="${barber.workStartHour != null && barber.workEndHour != null} ? ${barber.workStartHour} + ':00 - ' + ${barber.workEndHour} + ':00' : 'Brak ustalonych godzin'"></p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Dni Pracy</h4>
+                        <p th:text="${workDaysFormatted}"></p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 16px;">
+                    <a href="/login" class="premium-btn btn-secondary" style="text-decoration: none;"> Powrót do logowania</a>
+                    <a href="/login" class="premium-btn" style="text-decoration: none; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); color: #000;">Zarezerwuj wizytę</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

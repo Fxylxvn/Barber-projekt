@@ -257,5 +257,35 @@ public class MainController {
         }
         return result;
     }
+
+    @GetMapping("/barber-info/{username}")
+    public String barberInfo(@PathVariable("username") String username, Model model) {
+        User barber = userRepo.findByUsername(username);
+        if (barber == null || !"BARBER".equals(barber.getRole())) {
+            return "redirect:/login";
+        }
+        model.addAttribute("barber", barber);
+
+        String workDaysFormatted = "Brak ustalonych dni pracy";
+        if (barber.getWorkDays() != null && !barber.getWorkDays().isEmpty()) {
+            String[] days = barber.getWorkDays().split(",");
+            java.util.List<String> dayNames = new java.util.ArrayList<>();
+            for (String d : days) {
+                switch (d.trim()) {
+                    case "1": dayNames.add("Poniedziałek"); break;
+                    case "2": dayNames.add("Wtorek"); break;
+                    case "3": dayNames.add("Środa"); break;
+                    case "4": dayNames.add("Czwartek"); break;
+                    case "5": dayNames.add("Piątek"); break;
+                    case "6": dayNames.add("Sobota"); break;
+                    case "7": dayNames.add("Niedziela"); break;
+                }
+            }
+            workDaysFormatted = String.join(", ", dayNames);
+        }
+        model.addAttribute("workDaysFormatted", workDaysFormatted);
+
+        return "barber_info";
+    }
 }
 

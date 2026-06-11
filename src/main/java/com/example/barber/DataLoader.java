@@ -43,7 +43,7 @@ public class DataLoader {
                 b1.setUsername("barber1");
                 b1.setPassword(passwordEncoder.encode("pass"));
                 b1.setRole("BARBER");
-                b1.setName("Janusz");
+                b1.setName("Janusz Książkiewicz");
                 b1.setWorkStartHour(8);
                 b1.setWorkEndHour(16);
                 b1.setWorkDays("1,2,3,4,5");
