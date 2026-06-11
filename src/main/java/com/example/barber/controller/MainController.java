@@ -81,6 +81,7 @@ public class MainController {
         model.addAttribute("user", client);
         model.addAttribute("appointments", appointmentRepo.findByClient(client));
         model.addAttribute("barbers", userRepo.findByRole("BARBER"));
+        model.addAttribute("allAppointments", appointmentRepo.findAll());
         return "client_dashboard";
     }
 
