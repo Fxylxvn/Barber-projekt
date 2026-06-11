@@ -34,6 +34,18 @@
                         <span>Mój Grafik</span>
                     </button>
                 </li>
+                <li>
+                    <button class="nav-btn" id="btn-profile" onclick="switchScreen('profile')">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span>Mój Profil i Galeria</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" id="btn-inspirations" onclick="switchScreen('inspirations')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>Galeria Inspiracji</span>
+                    </button>
+                </li>
             </ul>
 
             <div class="sidebar-footer">
@@ -315,6 +327,150 @@
                 </form>
             </section>
 
+            <!-- ========================================== -->
+            <!-- SCREEN 4: MY PROFILE & GALLERY -->
+            <!-- ========================================== -->
+            <section id="screen-profile" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Mój Profil i Galeria</h1>
+                    <p class="section-desc">Zarządzaj swoim zdjęciem profilowym oraz galerią prac</p>
+                </div>
+
+                <div th:if="${param.profilePictureUpdated}" class="alert alert-success">
+                    Zdjęcie profilowe zostało zaktualizowane!
+                </div>
+                <div th:if="${param.galleryPhotoAdded}" class="alert alert-success">
+                    Zdjęcie zostało dodane do galerii!
+                </div>
+                <div th:if="${param.galleryPhotoDeleted}" class="alert alert-success">
+                    Zdjęcie zostało usunięte z galerii.
+                </div>
+                <div th:if="${param.error != null && #arrays.contains(param.error, 'UploadFailed')}" class="alert alert-error">
+                    Błąd podczas przesyłania pliku. Upewnij się, że plik jest poprawnym zdjęciem.
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px; align-items:start;">
+                    
+                    <!-- Lewy panel: Zdjęcie profilowe -->
+                    <div class="premium-card" style="display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center;">
+                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1px; align-self:flex-start;">Zdjęcie Profilowe</span>
+                        
+                        <img th:src="${barber.photoUrl != null ? barber.photoUrl : 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300'}" 
+                             style="width:180px; height:180px; border-radius:50%; object-fit:cover; border:3px solid var(--gold); box-shadow:0 0 20px var(--gold-glow-strong);" 
+                             alt="Profile photo"/>
+                        
+                        <form th:action="@{/barber/profile/update-picture}" method="post" enctype="multipart/form-data" style="box-shadow:none; padding:0; background:none; width:100%; margin:0; display:flex; flex-direction:column; gap:12px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <input type="file" name="profilePicture" accept="image/*" class="premium-input" required style="padding: 8px; font-size:12px;"/>
+                            </div>
+                            <button type="submit" class="premium-btn" style="width:100%; padding:10px; font-size:12px;">Zmień zdjęcie profilowe</button>
+                        </form>
+                    </div>
+
+                    <!-- Prawy panel: Zarządzanie galerią -->
+                    <div class="premium-card" style="display:flex; flex-direction:column; gap:20px;">
+                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1px;">Galeria Twoich Prac</span>
+                        
+                        <form th:action="@{/barber/gallery/add}" method="post" enctype="multipart/form-data" style="box-shadow:none; padding:0; background:none; width:100%; margin:0; display:flex; gap:12px; align-items:center;">
+                            <div class="form-group" style="margin-bottom:0; flex:1;">
+                                <input type="file" name="galleryPhoto" accept="image/*" class="premium-input" required style="padding: 8px; font-size:12px;"/>
+                            </div>
+                            <button type="submit" class="premium-btn" style="padding:10px 20px; font-size:12px; white-space:nowrap;">Dodaj zdjęcie</button>
+                        </form>
+
+                        <div style="border-top:1px solid var(--border-color); padding-top:20px; margin-top:10px;">
+                            <h3 style="font-size:13px; color:var(--text-light); margin-bottom:12px;">Aktualne zdjęcia w galerii</h3>
+                            
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:16px;">
+                                <div th:each="img : ${barber.galleryImages}" style="position:relative; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); aspect-ratio:1;">
+                                    <img th:src="${img}" style="width:100%; height:100%; object-fit:cover;" alt="Gallery item"/>
+                                    <form th:action="@{/barber/gallery/delete}" method="post" style="position:absolute; top:4px; right:4px; margin:0; padding:0; background:none; box-shadow:none;">
+                                        <input type="hidden" name="imageUrl" th:value="${img}"/>
+                                        <button type="submit" class="premium-btn" style="background:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:10px; min-width:auto; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center;">&times;</button>
+                                    </form>
+                                </div>
+                                <div th:if="${#lists.isEmpty(barber.galleryImages)}" style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">
+                                    Brak zdjęć w galerii. Dodaj pierwsze zdjęcie powyżej.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SCREEN 5: INSPIRATIONS MANAGEMENT -->
+            <!-- ========================================== -->
+            <section id="screen-inspirations" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Zarządzanie Inspiracjami</h1>
+                    <p class="section-desc">Dodawaj i usuwaj fryzury oraz brody widoczne w galerii inspiracji i turnieju stylów dla klientów</p>
+                </div>
+
+                <div th:if="${param.inspirationAdded}" class="alert alert-success">
+                    Zdjęcie zostało dodane do galerii inspiracji!
+                </div>
+                <div th:if="${param.inspirationDeleted}" class="alert alert-success">
+                    Zdjęcie zostało usunięte z galerii inspiracji.
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 2fr; gap:24px; align-items:start;">
+                    <!-- Lewy panel: Dodawanie inspiracji -->
+                    <div class="premium-card" style="display:flex; flex-direction:column; gap:20px;">
+                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1px;">Dodaj Nową Inspirację</span>
+                        
+                        <form th:action="@{/barber/inspirations/add}" method="post" enctype="multipart/form-data" style="box-shadow:none; padding:0; background:none; width:100%; margin:0; display:flex; flex-direction:column; gap:16px;">
+                            <div class="form-group">
+                                <label for="inspirationFile">Wybierz Zdjęcie</label>
+                                <input type="file" name="inspirationFile" id="inspirationFile" accept="image/*" class="premium-input" required style="padding: 8px; font-size:12px;"/>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="inspirationName">Nazwa / Opis Stylu</label>
+                                <input type="text" name="name" id="inspirationName" class="premium-input" placeholder="np. Modern Textured Pompadour" required maxlength="100"/>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="inspirationCategory">Kategoria</label>
+                                <select name="category" id="inspirationCategory" required>
+                                    <option value="hair">Fryzura (Włosy)</option>
+                                    <option value="beard">Broda / Zarost</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="premium-btn" style="width:100%; padding:12px; font-size:13px;">Dodaj do galerii wspólnej</button>
+                        </form>
+                    </div>
+
+                    <!-- Prawy panel: Podgląd wszystkich inspiracji -->
+                    <div class="premium-card" style="display:flex; flex-direction:column; gap:20px;">
+                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1px;">Wszystkie Inspiracje w Galerii</span>
+                        
+                        <div style="border-top:1px solid var(--border-color); padding-top:20px;">
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:16px;">
+                                <div th:each="style : ${inspirationStyles}" style="position:relative; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); display:flex; flex-direction:column; background:rgba(0,0,0,0.15);">
+                                    <div style="aspect-ratio:1; overflow:hidden; position:relative;">
+                                        <img th:src="${style.url}" style="width:100%; height:100%; object-fit:cover;" alt="Inspiration item"/>
+                                        <form th:action="@{/barber/inspirations/delete}" method="post" style="position:absolute; top:4px; right:4px; margin:0; padding:0; background:none; box-shadow:none;">
+                                            <input type="hidden" name="id" th:value="${style.id}"/>
+                                            <button type="submit" class="premium-btn" style="background:#ef4444; border-color:#ef4444; padding:4px 8px; font-size:10px; min-width:auto; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center;">&times;</button>
+                                        </form>
+                                    </div>
+                                    <div style="padding:8px; display:flex; flex-direction:column; gap:4px; flex-grow:1; justify-content:space-between;">
+                                        <div style="font-size:11px; font-weight:600; color:var(--text-light); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" th:text="${style.name}">Style Name</div>
+                                        <div style="font-size:9px; text-transform:uppercase; color:var(--gold); font-weight:700;" th:text="${style.category == 'hair' ? 'Włosy' : 'Broda'}">hair</div>
+                                    </div>
+                                </div>
+                                <div th:if="${#lists.isEmpty(inspirationStyles)}" style="grid-column:1/-1; text-align:center; padding:32px; color:var(--text-muted); font-size:13px;">
+                                    Brak inspiracji w galerii wspólnej. Dodaj pierwszą inspirację.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -334,6 +490,18 @@
             const btn = document.getElementById(`btn-${screenId}`);
             if (btn) btn.classList.add('active');
         }
+
+        // On load check hash
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#screen-')) {
+                const screenId = hash.replace('#screen-', '');
+                const targetScreen = document.getElementById(`screen-${screenId}`);
+                if (targetScreen) {
+                    switchScreen(screenId);
+                }
+            }
+        });
 
         // ==========================================
         // SELECT APPOINTMENT & LOAD CLIENT PROFILE

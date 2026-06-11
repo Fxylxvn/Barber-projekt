@@ -5,7 +5,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import lombok.Data;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Data
@@ -33,9 +40,15 @@ public class User {
     private Double rating;
     private String bio;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_gallery_images", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "image_url")
+    private List<String> galleryImages = new ArrayList<>();
+
     // Client preferences and styles
     private String clientPreferences;
     private String likedStyles;
     private String winnerStyle;
 }
+
 

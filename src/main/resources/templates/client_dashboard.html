@@ -520,17 +520,7 @@
         // ==========================================
         // GALLERY SYSTEM (LIKE/UNLIKE)
         // ==========================================
-        const stylesDatabase = [
-            { id: 'hair-1', name: 'Low Skin Fade', category: 'hair', url: 'https://images.unsplash.com/photo-1599351431247-f579338ae7f6?w=300' },
-            { id: 'hair-2', name: 'Textured Pompadour', category: 'hair', url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300' },
-            { id: 'hair-3', name: 'Classic French Crop', category: 'hair', url: 'https://images.unsplash.com/photo-1605497746444-ac9dbd34f196?w=300' },
-            { id: 'hair-4', name: 'High & Tight Buzz', category: 'hair', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300' },
-            { id: 'hair-5', name: 'Executive Side Part', category: 'hair', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300' },
-            { id: 'beard-1', name: 'Classic Full Beard', category: 'beard', url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=300' },
-            { id: 'beard-2', name: 'Corporate Beard Trim', category: 'beard', url: 'https://images.unsplash.com/photo-1593702295094-aea22597af65?w=300' },
-            { id: 'beard-3', name: 'Anchor Goatee', category: 'beard', url: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300' },
-            { id: 'beard-4', name: 'Dense Heavy Stubble', category: 'beard', url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300' }
-        ];
+        const stylesDatabase = /*[[${inspirationStyles}]]*/ [];
 
         let userLikedStyles = [];
         
@@ -553,7 +543,7 @@
 
             const filtered = stylesDatabase.filter(s => s.category === currentGalleryCategory);
             filtered.forEach(s => {
-                const isLiked = userLikedStyles.includes(s.id);
+                const isLiked = userLikedStyles.includes(s.id.toString());
                 
                 const item = document.createElement('div');
                 item.className = 'gallery-item-desktop';
@@ -607,12 +597,18 @@
         let tournamentPool = [];
         let tournamentRound = 1;
         let tournamentCurrentWinner = null;
-        const totalRounds = 5;
+        let totalRounds = 5;
 
         function startTournament() {
             // Shuffle and choose candidates
             const candidates = [...stylesDatabase].sort(() => 0.5 - Math.random());
-            tournamentPool = candidates.slice(0, 6);
+            if (candidates.length < 2) {
+                alert("Niewystarczająca liczba stylów w galerii, by rozpocząć turniej (wymagane min. 2 style).");
+                return;
+            }
+            const poolSize = Math.min(6, candidates.length);
+            totalRounds = poolSize - 1;
+            tournamentPool = candidates.slice(0, poolSize);
             tournamentRound = 1;
             tournamentCurrentWinner = tournamentPool[0];
 

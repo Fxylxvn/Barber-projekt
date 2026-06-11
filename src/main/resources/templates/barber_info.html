@@ -163,6 +163,16 @@
             border: 1px solid var(--border-color);
         }
         
+        .gallery-hover-item {
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .gallery-hover-item:hover {
+            transform: scale(1.04);
+            border-color: var(--gold) !important;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+        
         @media (max-width: 992px) {
             .profile-grid {
                 grid-template-columns: 1fr;
@@ -211,6 +221,21 @@
                         <span>💈</span> Profil Stylisty
                     </h2>
                     <p class="bio-text" th:text="${barber.bio != null ? barber.bio : 'Brak szczegółowego opisu o tym barberze.'}"></p>
+                </section>
+
+                <!-- Gallery Showcase -->
+                <section class="details-section">
+                    <h2 class="section-headline">
+                        <span>📸</span> Galeria Prac
+                    </h2>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:16px;">
+                        <div th:each="img : ${barber.galleryImages}" style="border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); aspect-ratio:1;" class="gallery-hover-item">
+                            <img th:src="${img}" style="width:100%; height:100%; object-fit:cover; display:block;" alt="Praca barbera"/>
+                        </div>
+                        <div th:if="${#lists.isEmpty(barber.galleryImages)}" style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-muted); font-size:14px;">
+                            Brak zdjęć w galerii tego stylisty.
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Certificate Details -->

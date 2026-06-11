@@ -2,18 +2,28 @@ package com.example.barber.controller;
 
 import com.example.barber.model.Appointment;
 import com.example.barber.model.User;
+import com.example.barber.model.InspirationStyle;
 import com.example.barber.repo.AppointmentRepo;
 import com.example.barber.repo.UserRepo;
+import com.example.barber.repo.InspirationStyleRepo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Controller
 public class MainController {
@@ -21,6 +31,7 @@ public class MainController {
     private final UserRepo userRepo;
     private final AppointmentRepo appointmentRepo;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final InspirationStyleRepo inspirationStyleRepo;
 
     private static final Map<String, Integer> SERVICE_DURATION = Map.of(
         "Włosy", 45,
@@ -38,10 +49,11 @@ public class MainController {
         "Wszystko", 120
     );
 
-    public MainController(UserRepo userRepo, AppointmentRepo appointmentRepo, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public MainController(UserRepo userRepo, AppointmentRepo appointmentRepo, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder, InspirationStyleRepo inspirationStyleRepo) {
         this.userRepo = userRepo;
         this.appointmentRepo = appointmentRepo;
         this.passwordEncoder = passwordEncoder;
+        this.inspirationStyleRepo = inspirationStyleRepo;
     }
 
     @GetMapping("/")
@@ -82,6 +94,7 @@ public class MainController {
         model.addAttribute("appointments", appointmentRepo.findByClient(client));
         model.addAttribute("barbers", userRepo.findByRole("BARBER"));
         model.addAttribute("allAppointments", appointmentRepo.findAll());
+        model.addAttribute("inspirationStyles", inspirationStyleRepo.findAll());
         return "client_dashboard";
     }
 
@@ -150,6 +163,7 @@ public class MainController {
         model.addAttribute("appointments", appointmentRepo.findByBarber(barber));
         model.addAttribute("allAppointments", appointmentRepo.findAll());
         model.addAttribute("barber", barber);
+        model.addAttribute("inspirationStyles", inspirationStyleRepo.findAll());
         return "barber_dashboard";
     }
 
@@ -331,6 +345,116 @@ public class MainController {
         model.addAttribute("cert", certInfo);
 
         return "barber_info";
+    }
+
+    private String saveUploadedFile(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            return null;
+        }
+        String uploadsDir = System.getProperty("user.dir") + "/uploads/";
+        File directory = new File(uploadsDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String newFilename = UUID.randomUUID().toString() + extension;
+        Path path = Paths.get(uploadsDir + newFilename);
+        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+        return "/uploads/" + newFilename;
+    }
+
+    @PostMapping("/barber/profile/update-picture")
+    public String updateProfilePicture(@RequestParam("profilePicture") MultipartFile file) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User barber = userRepo.findByUsername(auth.getName());
+        try {
+            String photoUrl = saveUploadedFile(file);
+            if (photoUrl != null) {
+                barber.setPhotoUrl(photoUrl);
+                userRepo.save(barber);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "redirect:/barber/dashboard?error=UploadFailed";
+        }
+        return "redirect:/barber/dashboard?profilePictureUpdated";
+    }
+
+    @PostMapping("/barber/gallery/add")
+    public String addGalleryPhoto(@RequestParam("galleryPhoto") MultipartFile file) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User barber = userRepo.findByUsername(auth.getName());
+        try {
+            String imageUrl = saveUploadedFile(file);
+            if (imageUrl != null) {
+                barber.getGalleryImages().add(imageUrl);
+                userRepo.save(barber);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "redirect:/barber/dashboard?error=UploadFailed";
+        }
+        return "redirect:/barber/dashboard?galleryPhotoAdded";
+    }
+
+    @PostMapping("/barber/gallery/delete")
+    public String deleteGalleryPhoto(@RequestParam("imageUrl") String imageUrl) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User barber = userRepo.findByUsername(auth.getName());
+        if (barber.getGalleryImages().contains(imageUrl)) {
+            barber.getGalleryImages().remove(imageUrl);
+            userRepo.save(barber);
+            try {
+                String filename = imageUrl.replace("/uploads/", "");
+                Path path = Paths.get(System.getProperty("user.dir") + "/uploads/" + filename);
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return "redirect:/barber/dashboard?galleryPhotoDeleted";
+    }
+
+    @PostMapping("/barber/inspirations/add")
+    public String addInspirationStyle(@RequestParam("inspirationFile") MultipartFile file,
+                                      @RequestParam("name") String name,
+                                      @RequestParam("category") String category) {
+        try {
+            String imageUrl = saveUploadedFile(file);
+            if (imageUrl != null) {
+                InspirationStyle style = new InspirationStyle();
+                style.setName(name);
+                style.setCategory(category);
+                style.setUrl(imageUrl);
+                inspirationStyleRepo.save(style);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "redirect:/barber/dashboard?error=UploadFailed";
+        }
+        return "redirect:/barber/dashboard?inspirationAdded#screen-inspirations";
+    }
+
+    @PostMapping("/barber/inspirations/delete")
+    public String deleteInspirationStyle(@RequestParam("id") Long id) {
+        InspirationStyle style = inspirationStyleRepo.findById(id).orElse(null);
+        if (style != null) {
+            inspirationStyleRepo.delete(style);
+            if (style.getUrl() != null && style.getUrl().startsWith("/uploads/")) {
+                try {
+                    String filename = style.getUrl().replace("/uploads/", "");
+                    Path path = Paths.get(System.getProperty("user.dir") + "/uploads/" + filename);
+                    Files.deleteIfExists(path);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return "redirect:/barber/dashboard?inspirationDeleted#screen-inspirations";
     }
 }
 
