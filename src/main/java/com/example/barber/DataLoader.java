@@ -108,6 +108,22 @@ public class DataLoader {
                 b4.getGalleryImages().add("https://images.unsplash.com/photo-1605497746444-ac9dbd34f196?w=300");
                 repo.save(b4);
 
+                User b5 = new User();
+                b5.setUsername("barber5");
+                b5.setPassword(passwordEncoder.encode("pass"));
+                b5.setRole("BARBER");
+                b5.setName("Michał Rzeka");
+                b5.setWorkStartHour(9);
+                b5.setWorkEndHour(17);
+                b5.setWorkDays("1,2,3,4,5");
+                b5.setTitle("Creative Barber");
+                b5.setRating(5.0);
+                b5.setBio("Mistrz nowoczesnych fryzur i cieniowania. Pasjonat kreatywnej stylizacji i nieszablonowych cięć.");
+                b5.setPhotoUrl("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300");
+                b5.getGalleryImages().add("https://images.unsplash.com/photo-1599351431247-f579338ae7f6?w=300");
+                b5.getGalleryImages().add("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300");
+                repo.save(b5);
+
                 // Clients
                 User k1 = new User();
                 k1.setUsername("klient1");
