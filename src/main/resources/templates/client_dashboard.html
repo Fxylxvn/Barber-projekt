@@ -344,6 +344,88 @@
         });
         /*[/]*/
 
+        const appointmentsData = [];
+        /*[# th:each="appt : ${allAppointments}"]*/
+        appointmentsData.push({
+            barberId: /*[[${appt.barber != null ? appt.barber.id : 0}]]*/ 0,
+            date: /*[[${appt.appointmentDate}]]*/ '', // format: "2026-06-11T19:30:00"
+            duration: /*[[${appt.durationMinutes != null ? appt.durationMinutes : 60}]]*/ 60
+        });
+        /*[/]*/
+
+        const serviceDurations = {
+            'Włosy': 45,
+            'Broda': 30,
+            'Włosy + Broda': 75,
+            'Klata': 15,
+            'Wszystko': 90
+        };
+
+        function updateAvailableTimes() {
+            const barberId = document.getElementById('selectedBarberId').value;
+            const dateStr = document.getElementById('dateOnly').value; // YYYY-MM-DD
+            const serviceType = document.getElementById('serviceType').value;
+            const timeSelect = document.getElementById('timeOnly');
+
+            if (!barberId) {
+                timeSelect.innerHTML = '<option value="">-- Najpierw wybierz barbera --</option>';
+                return;
+            }
+            if (!dateStr) {
+                timeSelect.innerHTML = '<option value="">-- Wybierz datę wizyty --</option>';
+                return;
+            }
+
+            const cardElement = document.querySelector(`.barber-card[data-id="${barberId}"]`);
+            const startHour = parseInt(cardElement.getAttribute('data-start')) || 8;
+            const endHour = parseInt(cardElement.getAttribute('data-end')) || 18;
+            selectedBarberDays = cardElement.getAttribute('data-days') || '';
+
+            // Get already booked appointments for this barber on this date
+            const barberBookings = appointmentsData.filter(appt => {
+                if (appt.barberId != barberId) return false;
+                return appt.date && appt.date.startsWith(dateStr);
+            });
+
+            // Parse booked intervals
+            const bookedIntervals = barberBookings.map(appt => {
+                const timePart = appt.date.split('T')[1];
+                const [h, m] = timePart.split(':').map(Number);
+                const startMins = h * 60 + m;
+                const endMins = startMins + appt.duration;
+                return { start: startMins, end: endMins };
+            });
+
+            const currentDuration = serviceDurations[serviceType] || 60;
+
+            timeSelect.innerHTML = '<option value="">-- Wybierz godzinę --</option>';
+
+            for (let hour = startHour; hour < endHour; hour++) {
+                for (let minute = 0; minute < 60; minute += 15) {
+                    const slotStartMins = hour * 60 + minute;
+                    const slotEndMins = slotStartMins + currentDuration;
+
+                    const isOccupied = bookedIntervals.some(booked => {
+                        return slotStartMins < booked.end && slotEndMins > booked.start;
+                    });
+
+                    const isWithinWorkingHours = slotEndMins <= endHour * 60;
+
+                    if (!isOccupied && isWithinWorkingHours) {
+                        const timeStr = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+                        const option = document.createElement('option');
+                        option.value = timeStr;
+                        option.textContent = timeStr;
+                        timeSelect.appendChild(option);
+                    }
+                }
+            }
+
+            if (timeSelect.options.length <= 1) {
+                timeSelect.innerHTML = '<option value="">-- Brak wolnych terminów w tym dniu --</option>';
+            }
+        }
+
         function selectBarber(cardElement) {
             document.querySelectorAll('.barber-card').forEach(card => {
                 card.classList.remove('selected');
@@ -374,25 +456,9 @@
                 document.getElementById('barber-bio-panel').style.display = 'none';
             }
 
-            // Update time select options based on barber hours
-            const startHour = parseInt(cardElement.getAttribute('data-start')) || 8;
-            const endHour = parseInt(cardElement.getAttribute('data-end')) || 18;
             selectedBarberDays = cardElement.getAttribute('data-days') || '';
-
-            const timeSelect = document.getElementById('timeOnly');
-            timeSelect.innerHTML = '<option value="">-- Wybierz godzinę --</option>';
-
-            for (let hour = startHour; hour < endHour; hour++) {
-                for (let minute = 0; minute < 60; minute += 15) {
-                    const timeStr = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
-                    const option = document.createElement('option');
-                    option.value = timeStr;
-                    option.textContent = timeStr;
-                    timeSelect.appendChild(option);
-                }
-            }
-
             validateWorkDay();
+            updateAvailableTimes();
         }
 
         const dateOnlyInput = document.getElementById('dateOnly');
@@ -424,6 +490,11 @@
 
         dateOnlyInput.addEventListener('change', function() {
             validateWorkDay();
+            updateAvailableTimes();
+            updateFullDateTime();
+        });
+        document.getElementById('serviceType').addEventListener('change', function() {
+            updateAvailableTimes();
             updateFullDateTime();
         });
         timeOnlySelect.addEventListener('change', updateFullDateTime);
