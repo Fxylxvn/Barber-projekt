@@ -348,7 +348,7 @@
         /*[# th:each="appt : ${allAppointments}"]*/
         appointmentsData.push({
             barberId: /*[[${appt.barber != null ? appt.barber.id : 0}]]*/ 0,
-            date: /*[[${appt.appointmentDate}]]*/ '', // format: "2026-06-11T19:30:00"
+            date: /*[[${appt.appointmentDate != null ? appt.appointmentDate.toString() : ''}]]*/ '', // format: "2026-06-11T19:30:00"
             duration: /*[[${appt.durationMinutes != null ? appt.durationMinutes : 60}]]*/ 60
         });
         /*[/]*/
