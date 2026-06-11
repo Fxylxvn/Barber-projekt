@@ -26,5 +26,16 @@ public class User {
     private Integer workEndHour;
 
     private String workDays;
+
+    // Barber portfolio fields
+    private String photoUrl;
+    private String title;
+    private Double rating;
+    private String bio;
+
+    // Client preferences and styles
+    private String clientPreferences;
+    private String likedStyles;
+    private String winnerStyle;
 }
 

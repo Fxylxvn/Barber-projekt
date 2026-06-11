@@ -24,6 +24,9 @@ public class Appointment {
     private String serviceType;
 
     private Integer durationMinutes;
+
+    @Column(length = 1000)
+    private String notes;
 }
 
 

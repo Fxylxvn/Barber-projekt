@@ -1,22 +1,53 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Rejestracja</title>
+    <title>GENTLEMAN'S BARBER CLUB - Rejestracja</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <h1>Rejestracja</h1>
-    <form th:action="@{/register}" th:object="${user}" method="post">
-        <div>
-            <label>Login: <input type="text" th:field="*{username}"/></label>
+    <div class="auth-container">
+        <!-- Left Side: High Quality Image & Branding -->
+        <div class="auth-image-side" style="background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.85)), url('https://images.unsplash.com/photo-1512485694743-9c9538b4e6e0?w=1000');">
+            <div style="margin-bottom: auto;">
+                <h1 class="logo-title" style="font-size: 28px; color:#fff;">GENTLEMAN'S</h1>
+                <h2 class="logo-subtitle" style="font-size: 13px; color:var(--gold); letter-spacing: 6px; margin-top: 4px;">BARBER CLUB</h2>
+            </div>
+            <div>
+                <h2>DOŁĄCZ DO NASZEJ SPOŁECZNOŚCI</h2>
+                <p>Załóż darmowe konto, aby zyskać dostęp do szybkiej rezerwacji terminów online, zapisywać ulubione stylizacje fryzur i brody, oraz brać udział w dopasowywaniu Twojego unikalnego stylu.</p>
+            </div>
         </div>
-        <div>
-            <label>Hasło: <input type="password" th:field="*{password}"/></label>
+
+        <!-- Right Side: Registration Form -->
+        <div class="auth-form-side">
+            <div style="margin-bottom: 32px;">
+                <h1 class="gold-title" style="font-size: 32px; font-family: var(--font-serif); color: var(--gold); margin-bottom: 8px;">Rejestracja</h1>
+                <p style="color: var(--text-muted); font-size: 14px;">Stwórz swój profil klienta</p>
+            </div>
+
+            <form th:action="@{/register}" method="post" th:object="${user}" class="premium-card" style="gap:16px; display:flex; flex-direction:column; padding:32px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="name">Imię i Nazwisko</label>
+                    <input type="text" th:field="*{name}" id="name" class="premium-input" placeholder="np. Jan Kowalski" required/>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="username">Adres E-mail</label>
+                    <input type="text" th:field="*{username}" id="username" class="premium-input" placeholder="np. jan.kowalski@gmail.com" required/>
+                </div>
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label for="password">Hasło</label>
+                    <input type="password" th:field="*{password}" id="password" class="premium-input" placeholder="Stwórz bezpieczne hasło..." required/>
+                </div>
+                <button type="submit" class="premium-btn" style="width:100%;">Stwórz konto</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 40px; font-size:14px;">
+                <span style="color: var(--text-muted);">Posiadasz już konto? </span>
+                <a href="/login" style="color: var(--gold); text-decoration: none; font-weight: 600; border-bottom: 1px solid var(--gold); padding-bottom:2px;">Zaloguj się</a>
+            </div>
         </div>
-         <div>
-            <label>Imię: <input type="text" th:field="*{name}"/></label>
-        </div>
-        <div><input type="submit" value="Zarejestruj"/></div>
-    </form>
+    </div>
 </body>
 </html>

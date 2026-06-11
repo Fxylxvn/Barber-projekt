@@ -1,79 +1,383 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Panel Klienta</title>
+    <title>Panel Klienta - GENTLEMAN'S CLUB</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <h1>Witaj, <span th:text="${user.name}"></span> (Klient)</h1>
-    <form th:action="@{/logout}" method="post">
-        <input type="submit" value="Wyloguj"/>
-    </form>
+    <!-- Hidden data store for Thymeleaf values -->
+    <div id="user-data" style="display:none;" 
+         th:data-liked="${user.likedStyles}" 
+         th:data-winner="${user.winnerStyle}"></div>
 
-    <h2>Umów wizytę</h2>
-    <div th:if="${param.error != null && #arrays.contains(param.error, 'Zajete')}">
-        <p class="error">Barber jest zajęty w tym terminie! Wybierz inną godzinę.</p>
-    </div>
-    <div th:if="${param.error != null && #arrays.contains(param.error, 'PozaGodzinami')}">
-        <p class="error">Wybrana godzina jest poza godzinami pracy barbera!</p>
-    </div>
-    <div th:if="${param.error != null && #arrays.contains(param.error, 'DzienWolny')}">
-        <p class="error">Barber nie pracuje w wybranym dniu tygodnia!</p>
-    </div>
-    <div th:if="${param.error != null && #arrays.contains(param.error, 'NieprawidlowaMinuta')}">
-        <p class="error">Minuty muszą być wielokrotnością 15 (np. 00, 15, 30, 45)!</p>
-    </div>
-    <div th:if="${param.success != null}">
-        <p class="success">Umówiono pomyślnie!</p>
+    <div class="desktop-layout">
+        <!-- Persistent left sidebar navigation -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <h1 class="logo-title">GENTLEMAN'S</h1>
+                <div class="logo-subtitle">Barber Club</div>
+            </div>
+
+            <ul class="nav-links">
+                <li>
+                    <button class="nav-btn active" id="btn-book" onclick="switchScreen('book')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Umów Wizytę</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" id="btn-gallery" onclick="switchScreen('gallery')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>Galeria Inspiracji</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" id="btn-matcher" onclick="switchScreen('matcher')">
+                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span>Turniej Stylu</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" id="btn-visits" onclick="switchScreen('visits')">
+                        <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        <span>Moje Wizyty</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                    <div>
+                        <div style="font-weight:600; font-size:14px; color:#fff;" th:text="${user.name}">Jan Kowalski</div>
+                        <div style="font-size:11px; color:var(--text-muted);">Zalogowany Klient</div>
+                    </div>
+                </div>
+                <form th:action="@{/logout}" method="post" style="box-shadow:none; padding:0; background:none; width:100%; margin:0;">
+                    <button type="submit" class="premium-btn btn-secondary" style="width:100%; padding:10px; font-size:12px;">
+                        Wyloguj Się
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- ========================================== -->
+            <!-- SCREEN 1: APPOINTMENT BOOKING -->
+            <!-- ========================================== -->
+            <section id="screen-book" class="desktop-screen active">
+                <div>
+                    <h1 class="section-title">Rezerwacja Terminu</h1>
+                    <p class="section-desc">Skonfiguruj wizytę u swojego ulubionego stylisty</p>
+                </div>
+
+                <!-- Alert notices -->
+                <div th:if="${param.error != null && #arrays.contains(param.error, 'Zajete')}" class="alert alert-error">
+                    Barber jest już zajęty w wybranej godzinie! Wybierz inną godzinę rezerwacji.
+                </div>
+                <div th:if="${param.error != null && #arrays.contains(param.error, 'PozaGodzinami')}" class="alert alert-error">
+                    Wybrana godzina wykracza poza standardowy grafik pracy barbera.
+                </div>
+                <div th:if="${param.error != null && #arrays.contains(param.error, 'DzienWolny')}" class="alert alert-error">
+                    Wybrany barber nie pracuje w tym dniu tygodnia.
+                </div>
+                <div th:if="${param.error != null && #arrays.contains(param.error, 'NieprawidlowaMinuta')}" class="alert alert-error">
+                    Rezerwacje przyjmowane są w odstępach co 15 minut (np. 12:00, 12:15, 12:30).
+                </div>
+                <div th:if="${param.success != null}" class="alert alert-success">
+                    Twoja wizyta została pomyślnie zarezerwowana! Szczegóły znajdziesz w zakładce "Moje Wizyty".
+                </div>
+
+                <form th:action="@{/client/book}" method="post" id="bookingForm" style="box-shadow:none; padding:0; background:none; max-width:none; margin:0; display:flex; flex-direction:column; gap:32px;">
+                    
+                    <!-- 1. Barber Selection Responsive Grid -->
+                    <div>
+                        <label style="font-size:12px; text-transform:uppercase; letter-spacing:1.5px; color:var(--gold); font-weight:700; display:block; margin-bottom:16px;">Krok 1: Wybierz Barbera</label>
+                        
+                        <div class="barber-grid">
+                            <div th:each="b : ${barbers}" 
+                                 class="barber-card" 
+                                 th:data-id="${b.id}"
+                                 th:data-start="${b.workStartHour}"
+                                 th:data-end="${b.workEndHour}"
+                                 th:data-days="${b.workDays}"
+                                 onclick="selectBarber(this)">
+                                <img th:src="${b.photoUrl != null ? b.photoUrl : 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300'}" alt="Barber photo"/>
+                                <div class="name" th:text="${b.name}">Barber</div>
+                                <div class="title" th:text="${b.title != null ? b.title : 'Barber'}">Master</div>
+                                <div class="rating">
+                                    <span>★</span> <span th:text="${b.rating != null ? b.rating : '5.0'}">4.9</span>
+                                </div>
+                                <div class="select-indicator">
+                                    <button type="button" class="premium-btn btn-secondary" style="width:100%; padding:10px; font-size:12px; pointer-events:none;">Wybierz</button>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="barberId" id="selectedBarberId" required/>
+                    </div>
+
+                    <!-- Selected Barber Info (Bio Display) -->
+                    <div id="barber-bio-panel" class="premium-card" style="display:none; border-left: 3px solid var(--gold); max-width: 800px;">
+                        <h3 style="color:var(--gold); font-family:var(--font-serif); font-size:16px;">O wybranym styliście</h3>
+                        <p id="barber-bio-text" style="color:var(--text-muted); font-size:14px; line-height:1.6; margin-top:8px; font-style:italic;"></p>
+                    </div>
+
+                    <!-- 2. Booking details panel -->
+                    <div class="premium-card" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:24px; max-width:1000px;">
+                        <div class="form-group">
+                            <label for="serviceType">Usługa</label>
+                            <select name="serviceType" id="serviceType" required>
+                                <option value="Włosy">Strzyżenie włosów (45 min) - 50 zł</option>
+                                <option value="Broda">Trymowanie brody (30 min) - 35 zł</option>
+                                <option value="Włosy + Broda">Combo: Włosy + Broda (75 min) - 75 zł</option>
+                                <option value="Klata">Golenie klatki piersiowej (15 min) - 20 zł</option>
+                                <option value="Wszystko">Królewski pakiet: Wszystko (90 min) - 120 zł</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dateOnly">Data Wizyty</label>
+                            <input type="date" name="dateOnly" id="dateOnly" class="premium-input" required/>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="timeOnly">Dostępna Godzina</label>
+                            <select name="timeOnly" id="timeOnly" required>
+                                <option value="">-- Najpierw wybierz barbera --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 3. Notes layout -->
+                    <div class="premium-card" style="max-width: 1000px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="notes">Uwagi i specyficzne wymagania do wizyty</label>
+                            <textarea name="notes" id="notes" placeholder="Opisz swoje oczekiwania, np. długość boczna, styl brody, czy potrzebujesz porady dotyczącej pielęgnacji..." maxlength="1000"></textarea>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="date" id="fullDateTime"/>
+                    
+                    <div style="max-width:1000px; text-align:right;">
+                        <button type="submit" class="premium-btn" style="min-width: 250px;">Potwierdź rezerwację wizyty</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SCREEN 2: MEDIA GALLERY -->
+            <!-- ========================================== -->
+            <section id="screen-gallery" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Galeria Inspiracji</h1>
+                    <p class="section-desc">Zainspiruj się najnowszymi trendami w modzie męskiej</p>
+                </div>
+
+                <div class="gallery-tab-switcher">
+                    <button class="gallery-tab-btn active" onclick="switchGalleryCategory('hair')">Inspiracje: Fryzury Męskie</button>
+                    <button class="gallery-tab-btn" onclick="switchGalleryCategory('beard')">Inspiracje: Brody i Zarost</button>
+                </div>
+
+                <div id="gallery-grid" class="gallery-grid-desktop">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SCREEN 3: STYLE TOURNAMENT -->
+            <!-- ========================================== -->
+            <section id="screen-matcher" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Znajdź swój idealny styl</h1>
+                    <p class="section-desc">Interaktywny dobór cięcia dopasowanego do Twoich upodobań</p>
+                </div>
+
+                <div class="tournament-desktop-wrapper">
+                    <!-- Tournament Start -->
+                    <div id="tournament-start" class="tournament-panel-desktop">
+                        <div style="font-size: 48px; color: var(--gold); margin-bottom: 20px;">💈</div>
+                        <h2 style="font-family: var(--font-serif); font-size: 24px; color: #fff; margin-bottom: 16px;">Witaj w Kreatorze Stylu</h2>
+                        <p style="color: var(--text-muted); font-size: 15px; max-width: 600px; margin: 0 auto 32px auto; line-height: 1.6;">
+                            Nasz kreator pozwoli Ci wybrać optymalny styl w systemie pucharowym. Będziemy pokazywać Ci po dwie kompozycje fryzur side-by-side. 
+                            Wybierz tę, która bardziej Ci odpowiada przyciskiem myszy lub używając strzałek <strong style="color:var(--gold);">← (Strzałka w lewo)</strong> oraz <strong style="color:var(--gold);">→ (Strzałka w prawo)</strong> na klawiaturze. Zwycięska fryzura zapisze się na Twoim profilu!
+                        </p>
+                        <button class="premium-btn" onclick="startTournament()" style="padding: 18px 48px;">Uruchom turniej</button>
+
+                        <div id="active-winner-panel" class="premium-card" style="margin-top: 32px; max-width: 400px; margin-left: auto; margin-right: auto; border-color: var(--gold);">
+                            <span style="font-size: 11px; text-transform: uppercase; color: var(--gold); font-weight: 700; letter-spacing:1px;">Twój zapisany styl:</span>
+                            <h3 id="active-winner-name" style="font-family: var(--font-serif); font-size: 20px; margin-top: 6px;"></h3>
+                        </div>
+                    </div>
+
+                    <!-- Tournament Gameplay -->
+                    <div id="tournament-gameplay" class="tournament-panel-desktop" style="display: none;">
+                        <span class="round-indicator" id="round-indicator" style="font-size:14px;">Runda 1 z 5</span>
+                        <h2 style="font-size: 20px; color:#fff; font-family:var(--font-serif); margin-top:8px; margin-bottom: 24px;">Która stylizacja bardziej Ci się podoba?</h2>
+                        
+                        <div class="tournament-versus-container">
+                            <div class="tournament-card-option" onclick="chooseStyle(0)" id="option-card-a">
+                                <img id="option-a-img" src="" alt="Opcja A"/>
+                                <div class="option-label" id="option-a-name">Opcja A</div>
+                            </div>
+                            <div class="versus-divider">VS</div>
+                            <div class="tournament-card-option" onclick="chooseStyle(1)" id="option-card-b">
+                                <img id="option-b-img" src="" alt="Opcja B"/>
+                                <div class="option-label" id="option-b-name">Opcja B</div>
+                            </div>
+                        </div>
+
+                        <p style="font-size:12px; color:var(--text-muted); margin-top:16px;">Możesz sterować za pomocą klawiatury: Strzałka w lewo (wybór lewej) / Strzałka w prawo (wybór prawej)</p>
+                    </div>
+
+                    <!-- Tournament Result -->
+                    <div id="tournament-result" class="tournament-panel-desktop" style="display: none; flex-direction: column; align-items: center; gap: 24px;">
+                        <div style="font-size: 40px; margin-bottom: 8px;">🏆</div>
+                        <span style="font-size:12px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:2px;">Wybrany styl idealny</span>
+                        <h2 id="tournament-winner-name" style="font-family:var(--font-serif); font-size:32px; color:var(--gold);">Perfect Crop</h2>
+                        
+                        <div style="width: 240px; aspect-ratio: 3/4; border-radius: var(--radius-xl); overflow:hidden; border:3px solid var(--gold); box-shadow:0 10px 30px var(--gold-glow-strong);">
+                            <img id="tournament-winner-img" src="" style="width:100%; height:100%; object-fit:cover;" alt="Winner"/>
+                        </div>
+
+                        <div class="premium-card" style="border-color: rgba(34, 197, 94, 0.4); max-width: 500px; padding:18px;">
+                            <span style="color:#4ade80; font-weight:700; font-size:14px;">Gra Ukończona!</span>
+                            <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Twój styl został zapisany! Barber zobaczy go automatycznie podczas Twojej wizyty.</p>
+                        </div>
+
+                        <div style="display:flex; gap:16px;">
+                            <button class="premium-btn" onclick="saveTournamentResult()">Zatwierdź i zapisz w profilu</button>
+                            <button class="premium-btn btn-secondary" onclick="resetTournament()">Zagraj ponownie</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SCREEN 4: MY APPOINTMENTS -->
+            <!-- ========================================== -->
+            <section id="screen-visits" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Moje Wizyty</h1>
+                    <p class="section-desc">Sprawdź historię i status swoich rezerwacji</p>
+                </div>
+
+                <div class="desktop-table-container">
+                    <table class="desktop-table">
+                        <thead>
+                            <tr>
+                                <th>Data wizyty</th>
+                                <th>Wybrany Stylista</th>
+                                <th>Wykonana Usługa</th>
+                                <th>Czas trwania</th>
+                                <th>Wskazówki i uwagi do wizyty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="v : ${appointments}">
+                                <td style="font-weight:600; color:var(--gold);" th:text="${#strings.replace(v.appointmentDate.toString(), 'T', ' ')}">12-06-2026 12:00</td>
+                                <td th:text="${v.barber != null ? v.barber.name : 'Dowolny'}">Andrzej</td>
+                                <td th:text="${v.serviceType}">Włosy</td>
+                                <td th:text="${v.durationMinutes} + ' minut'">45 minut</td>
+                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; color:var(--text-muted);"
+                                    th:text="${v.notes != null && !#strings.isEmpty(v.notes) ? v.notes : 'Brak uwag'}"
+                                    th:title="${v.notes}">Uwagi</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(appointments)}">
+                                <td colspan="5" style="text-align:center; padding:48px; color:var(--text-muted);">
+                                    <div style="font-size:36px; margin-bottom:16px;">📅</div>
+                                    Brak zarezerwowanych wizyt. Przejdź do sekcji "Umów Wizytę", aby zarezerwować termin.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
     </div>
 
-    <form th:action="@{/client/book}" method="post" id="bookingForm">
-        <label>Barber:
-            <select name="barberId" id="barberSelect">
-                <option th:each="b : ${barbers}" th:value="${b.id}"
-                        th:data-start="${b.workStartHour}"
-                        th:data-end="${b.workEndHour}"
-                        th:data-days="${b.workDays}"
-                        th:text="${b.name} + (${b.workStartHour != null && b.workEndHour != null} ? ' (Godz: ' + ${b.workStartHour} + ':00 - ' + ${b.workEndHour} + ':00)' : ' (Brak ustalonych godzin)')">
-                </option>
-            </select>
-        </label>
-        <label>Usługa:
-            <select name="serviceType" required>
-                <option value="Włosy">Włosy (45 min) - 50 zł</option>
-                <option value="Broda">Broda (30 min) - 35 zł</option>
-                <option value="Włosy + Broda">Włosy + Broda (75 min) - 75 zł</option>
-                <option value="Klata">Klata (15 min) - 20 zł</option>
-                <option value="Wszystko">Wszystko (90 min) - 120 zł</option>
-            </select>
-        </label>
-        <label>Data:
-            <input type="date" name="dateOnly" id="dateOnly" required/>
-        </label>
-        <label>Godzina:
-            <select name="timeOnly" id="timeOnly" required>
-                <option value="">-- Wybierz godzinę --</option>
-            </select>
-        </label>
-        <input type="hidden" name="date" id="fullDateTime"/>
-        <input type="submit" value="Umów"/>
-    </form>
+    <!-- JavaScript dynamic scripts -->
+    <script th:inline="javascript">
+        // Screen switching
+        function switchScreen(screenId) {
+            document.querySelectorAll('.desktop-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
 
-    <script>
-        const barberSelect = document.getElementById('barberSelect');
-        const dateOnly = document.getElementById('dateOnly');
-        const timeOnly = document.getElementById('timeOnly');
-        const fullDateTime = document.getElementById('fullDateTime');
-        const form = document.getElementById('bookingForm');
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            
+            // Set active button
+            const btn = document.getElementById(`btn-${screenId}`);
+            if (btn) btn.classList.add('active');
 
+            // Hook / Unhook keyboard events based on screen
+            if (screenId === 'matcher' && document.getElementById('tournament-gameplay').style.display === 'block') {
+                window.addEventListener('keydown', handleArrowKeys);
+            } else {
+                window.removeEventListener('keydown', handleArrowKeys);
+            }
+        }
+
+        // ==========================================
+        // BOOKING & BARBER SELECTION DATA
+        // ==========================================
+        let selectedBarberDays = '';
         const dayNames = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
 
-        function updateTimeOptions() {
-            const selectedBarber = barberSelect.options[barberSelect.selectedIndex];
-            const startHour = parseInt(selectedBarber.dataset.start) || 0;
-            const endHour = parseInt(selectedBarber.dataset.end) || 24;
+        const barberData = [];
+        /*[# th:each="b : ${barbers}"]*/
+        barberData.push({
+            id: /*[[${b.id}]]*/ 0,
+            name: /*[[${b.name}]]*/ '',
+            bio: /*[[${b.bio}]]*/ '',
+            start: /*[[${b.workStartHour}]]*/ 8,
+            end: /*[[${b.workEndHour}]]*/ 18,
+            days: /*[[${b.workDays}]]*/ ''
+        });
+        /*[/]*/
 
-            timeOnly.innerHTML = '<option value="">-- Wybierz godzinę --</option>';
+        function selectBarber(cardElement) {
+            document.querySelectorAll('.barber-card').forEach(card => {
+                card.classList.remove('selected');
+                const btn = card.querySelector('button');
+                if (btn) {
+                    btn.classList.add('btn-secondary');
+                    btn.textContent = 'Wybierz';
+                }
+            });
+
+            cardElement.classList.add('selected');
+            const btn = cardElement.querySelector('button');
+            if (btn) {
+                btn.classList.remove('btn-secondary');
+                btn.textContent = 'Wybrany';
+            }
+
+            const barberId = cardElement.getAttribute('data-id');
+            document.getElementById('selectedBarberId').value = barberId;
+
+            // Load bio details
+            const barberObj = barberData.find(b => b.id == barberId);
+            if (barberObj && barberObj.bio) {
+                document.getElementById('barber-bio-text').textContent = barberObj.bio;
+                document.getElementById('barber-bio-panel').style.display = 'block';
+            } else {
+                document.getElementById('barber-bio-panel').style.display = 'none';
+            }
+
+            // Update time select options based on barber hours
+            const startHour = parseInt(cardElement.getAttribute('data-start')) || 8;
+            const endHour = parseInt(cardElement.getAttribute('data-end')) || 18;
+            selectedBarberDays = cardElement.getAttribute('data-days') || '';
+
+            const timeSelect = document.getElementById('timeOnly');
+            timeSelect.innerHTML = '<option value="">-- Wybierz godzinę --</option>';
 
             for (let hour = startHour; hour < endHour; hour++) {
                 for (let minute = 0; minute < 60; minute += 15) {
@@ -81,68 +385,254 @@
                     const option = document.createElement('option');
                     option.value = timeStr;
                     option.textContent = timeStr;
-                    timeOnly.appendChild(option);
+                    timeSelect.appendChild(option);
                 }
             }
+
+            validateWorkDay();
         }
 
+        const dateOnlyInput = document.getElementById('dateOnly');
+        const timeOnlySelect = document.getElementById('timeOnly');
+        const fullDateTimeInput = document.getElementById('fullDateTime');
+        const bookingForm = document.getElementById('bookingForm');
+
         function updateFullDateTime() {
-            if (dateOnly.value && timeOnly.value) {
-                fullDateTime.value = dateOnly.value + 'T' + timeOnly.value;
+            if (dateOnlyInput.value && timeOnlySelect.value) {
+                fullDateTimeInput.value = dateOnlyInput.value + 'T' + timeOnlySelect.value;
             }
         }
 
         function validateWorkDay() {
-            if (!dateOnly.value) return true;
+            if (!dateOnlyInput.value || !selectedBarberDays) return true;
 
-            const selectedBarber = barberSelect.options[barberSelect.selectedIndex];
-            const workDays = selectedBarber.dataset.days;
-
-            if (!workDays) return true;
-
-            const selectedDate = new Date(dateOnly.value);
+            const selectedDate = new Date(dateOnlyInput.value);
             let jsDayOfWeek = selectedDate.getDay();
             let javaDayOfWeek = jsDayOfWeek === 0 ? 7 : jsDayOfWeek;
 
-            if (!workDays.includes(String(javaDayOfWeek))) {
+            if (!selectedBarberDays.includes(String(javaDayOfWeek))) {
                 const dayName = dayNames[jsDayOfWeek];
-                alert('Barber nie pracuje w ' + dayName + '! Proszę wybrać inny dzień.');
+                alert('Wybrany barber nie pracuje w ' + dayName + '! Proszę wybrać inną datę.');
+                dateOnlyInput.value = '';
                 return false;
             }
             return true;
         }
 
-        barberSelect.addEventListener('change', updateTimeOptions);
-        dateOnly.addEventListener('change', function() {
+        dateOnlyInput.addEventListener('change', function() {
             validateWorkDay();
             updateFullDateTime();
         });
-        timeOnly.addEventListener('change', updateFullDateTime);
+        timeOnlySelect.addEventListener('change', updateFullDateTime);
 
-        form.addEventListener('submit', function(e) {
+        bookingForm.addEventListener('submit', function(e) {
+            if (!document.getElementById('selectedBarberId').value) {
+                e.preventDefault();
+                alert('Proszę wybrać barbera przed rezerwacją.');
+                return false;
+            }
             if (!validateWorkDay()) {
                 e.preventDefault();
                 return false;
             }
             updateFullDateTime();
-            if (!fullDateTime.value) {
+            if (!fullDateTimeInput.value) {
                 e.preventDefault();
-                alert('Proszę wybrać datę i godzinę.');
+                alert('Proszę wybrać poprawną datę i godzinę.');
                 return false;
             }
         });
 
-        updateTimeOptions();
-    </script>
+        // ==========================================
+        // GALLERY SYSTEM (LIKE/UNLIKE)
+        // ==========================================
+        const stylesDatabase = [
+            { id: 'hair-1', name: 'Low Skin Fade', category: 'hair', url: 'https://images.unsplash.com/photo-1599351431247-f579338ae7f6?w=300' },
+            { id: 'hair-2', name: 'Textured Pompadour', category: 'hair', url: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300' },
+            { id: 'hair-3', name: 'Classic French Crop', category: 'hair', url: 'https://images.unsplash.com/photo-1605497746444-ac9dbd34f196?w=300' },
+            { id: 'hair-4', name: 'High & Tight Buzz', category: 'hair', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300' },
+            { id: 'hair-5', name: 'Executive Side Part', category: 'hair', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300' },
+            { id: 'beard-1', name: 'Classic Full Beard', category: 'beard', url: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=300' },
+            { id: 'beard-2', name: 'Corporate Beard Trim', category: 'beard', url: 'https://images.unsplash.com/photo-1593702295094-aea22597af65?w=300' },
+            { id: 'beard-3', name: 'Anchor Goatee', category: 'beard', url: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300' },
+            { id: 'beard-4', name: 'Dense Heavy Stubble', category: 'beard', url: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300' }
+        ];
 
-    <h2>Twoje Wizyty</h2>
-    <ul>
-        <li th:each="v : ${appointments}">
-            <span th:text="${v.appointmentDate}"></span> -
-            Barber: <span th:text="${v.barber != null ? v.barber.name : 'Nieznany'}"></span> -
-            Usługa: <span th:text="${v.serviceType}"></span>
-            (<span th:text="${v.durationMinutes}"></span> min)
-        </li>
-    </ul>
+        let userLikedStyles = [];
+        
+        // Read liked styles on load
+        const rawLiked = document.getElementById('user-data').getAttribute('data-liked') || '';
+        userLikedStyles = rawLiked.split(',').filter(x => x.length > 0);
+
+        // Winner style read
+        const activeWinner = document.getElementById('user-data').getAttribute('data-winner') || '';
+        if (activeWinner) {
+            document.getElementById('active-winner-name').textContent = activeWinner;
+            document.getElementById('active-winner-panel').style.display = 'block';
+        }
+
+        let currentGalleryCategory = 'hair';
+
+        function renderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+
+            const filtered = stylesDatabase.filter(s => s.category === currentGalleryCategory);
+            filtered.forEach(s => {
+                const isLiked = userLikedStyles.includes(s.id);
+                
+                const item = document.createElement('div');
+                item.className = 'gallery-item-desktop';
+                item.innerHTML = `
+                    <img src="${s.url}" alt="${s.name}"/>
+                    <div class="gallery-item-overlay">
+                        <div class="gallery-item-title">${s.name}</div>
+                        <button class="like-heart-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${s.id}')">
+                            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        function switchGalleryCategory(category) {
+            currentGalleryCategory = category;
+            document.querySelectorAll('.gallery-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            renderGallery();
+        }
+
+        function toggleLike(styleId) {
+            fetch('/client/like-style', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `styleId=${styleId}`
+            }).then(response => {
+                if (response.ok) {
+                    if (userLikedStyles.includes(styleId)) {
+                        userLikedStyles = userLikedStyles.filter(id => id !== styleId);
+                    } else {
+                        userLikedStyles.push(styleId);
+                    }
+                    renderGallery();
+                }
+            });
+        }
+
+        // Initialize Gallery
+        renderGallery();
+
+        // ==========================================
+        // STYLE TOURNAMENT (KEYBOARD + CLICKS)
+        // ==========================================
+        let tournamentPool = [];
+        let tournamentRound = 1;
+        let tournamentCurrentWinner = null;
+        const totalRounds = 5;
+
+        function startTournament() {
+            // Shuffle and choose candidates
+            const candidates = [...stylesDatabase].sort(() => 0.5 - Math.random());
+            tournamentPool = candidates.slice(0, 6);
+            tournamentRound = 1;
+            tournamentCurrentWinner = tournamentPool[0];
+
+            document.getElementById('tournament-start').style.display = 'none';
+            document.getElementById('tournament-gameplay').style.display = 'block';
+            document.getElementById('tournament-result').style.display = 'none';
+
+            window.addEventListener('keydown', handleArrowKeys);
+            showMatchup();
+        }
+
+        function showMatchup() {
+            const optionA = tournamentCurrentWinner;
+            const optionB = tournamentPool[tournamentRound];
+
+            document.getElementById('round-indicator').textContent = `Runda ${tournamentRound} z ${totalRounds}`;
+            
+            document.getElementById('option-a-img').src = optionA.url;
+            document.getElementById('option-a-name').textContent = optionA.name;
+            
+            document.getElementById('option-b-img').src = optionB.url;
+            document.getElementById('option-b-name').textContent = optionB.name;
+        }
+
+        function chooseStyle(choiceIndex) {
+            if (choiceIndex === 1) {
+                // Option B chosen
+                tournamentCurrentWinner = tournamentPool[tournamentRound];
+            }
+
+            // Visual feedback glow
+            const cardId = choiceIndex === 0 ? 'option-card-a' : 'option-card-b';
+            const card = document.getElementById(cardId);
+            card.style.borderColor = '#4ade80';
+            card.style.boxShadow = '0 0 30px rgba(74, 222, 128, 0.4)';
+
+            setTimeout(() => {
+                // Reset border inline styling
+                card.style.borderColor = '';
+                card.style.boxShadow = '';
+
+                if (tournamentRound < totalRounds) {
+                    tournamentRound++;
+                    showMatchup();
+                } else {
+                    endTournament();
+                }
+            }, 200);
+        }
+
+        function handleArrowKeys(e) {
+            if (e.key === 'ArrowLeft') {
+                chooseStyle(0);
+            } else if (e.key === 'ArrowRight') {
+                chooseStyle(1);
+            }
+        }
+
+        function endTournament() {
+            window.removeEventListener('keydown', handleArrowKeys);
+            document.getElementById('tournament-gameplay').style.display = 'none';
+            document.getElementById('tournament-result').style.display = 'flex';
+            document.getElementById('tournament-winner-name').textContent = tournamentCurrentWinner.name;
+            document.getElementById('tournament-winner-img').src = tournamentCurrentWinner.url;
+        }
+
+        function saveTournamentResult() {
+            const winnerName = tournamentCurrentWinner.name;
+            fetch('/client/set-winner-style', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `winnerStyle=${winnerName}`
+            }).then(response => {
+                if (response.ok) {
+                    alert(`Twój zwycięski styl "${winnerName}" został pomyślnie zapisany!`);
+                    
+                    document.getElementById('active-winner-name').textContent = winnerName;
+                    document.getElementById('active-winner-panel').style.display = 'block';
+
+                    resetTournament();
+                } else {
+                    alert('Problem z zapisem zwycięzcy.');
+                }
+            });
+        }
+
+        function resetTournament() {
+            window.removeEventListener('keydown', handleArrowKeys);
+            document.getElementById('tournament-result').style.display = 'none';
+            document.getElementById('tournament-gameplay').style.display = 'none';
+            document.getElementById('tournament-start').style.display = 'block';
+        }
+    </script>
 </body>
 </html>

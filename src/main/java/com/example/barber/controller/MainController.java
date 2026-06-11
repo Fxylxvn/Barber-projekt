@@ -85,7 +85,11 @@ public class MainController {
     }
 
     @PostMapping("/client/book")
-    public String bookVisit(@RequestParam("barberId") Long barberId, @RequestParam("date") String date, @RequestParam("serviceType") String serviceType, Model model) {
+    public String bookVisit(@RequestParam("barberId") Long barberId, 
+                            @RequestParam("date") String date, 
+                            @RequestParam("serviceType") String serviceType, 
+                            @RequestParam(value = "notes", required = false) String notes, 
+                            Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User client = userRepo.findByUsername(auth.getName());
         User barber = userRepo.findById(barberId).orElseThrow();
@@ -132,6 +136,7 @@ public class MainController {
         appointment.setServiceType(serviceType);
         appointment.setDurationMinutes(newServiceDuration);
         appointment.setDescription(serviceType);
+        appointment.setNotes(notes);
         appointmentRepo.save(appointment);
 
         return "redirect:/client/dashboard?success";
@@ -167,6 +172,90 @@ public class MainController {
     public String deleteVisit(@PathVariable("id") Long id) {
         appointmentRepo.deleteById(id);
         return "redirect:/barber/dashboard";
+    }
+
+    @PostMapping("/client/like-style")
+    @ResponseBody
+    public String toggleLikeStyle(@RequestParam("styleId") String styleId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User client = userRepo.findByUsername(auth.getName());
+        String liked = client.getLikedStyles();
+        if (liked == null) {
+            liked = "";
+        }
+        List<String> list = new java.util.ArrayList<>(java.util.Arrays.asList(liked.split(",")));
+        list.removeIf(String::isEmpty);
+        if (list.contains(styleId)) {
+            list.remove(styleId);
+        } else {
+            list.add(styleId);
+        }
+        client.setLikedStyles(String.join(",", list));
+        userRepo.save(client);
+        return "OK";
+    }
+
+    @PostMapping("/client/set-winner-style")
+    @ResponseBody
+    public String setWinnerStyle(@RequestParam("winnerStyle") String winnerStyle) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User client = userRepo.findByUsername(auth.getName());
+        client.setWinnerStyle(winnerStyle);
+        userRepo.save(client);
+        return "OK";
+    }
+
+    @PostMapping("/barber/client-preferences")
+    public String saveClientPreferences(@RequestParam("clientId") Long clientId, @RequestParam("clientPreferences") String clientPreferences) {
+        User client = userRepo.findById(clientId).orElseThrow();
+        client.setClientPreferences(clientPreferences);
+        userRepo.save(client);
+        return "redirect:/barber/dashboard?preferencesSaved";
+    }
+
+    @GetMapping("/barber/client-details/{id}")
+    @ResponseBody
+    public Map<String, Object> getClientDetails(@PathVariable("id") Long id) {
+        User client = userRepo.findById(id).orElseThrow();
+        List<Appointment> appointments = appointmentRepo.findByClient(client);
+
+        List<Map<String, Object>> apptsData = new java.util.ArrayList<>();
+        for (Appointment a : appointments) {
+            apptsData.add(Map.of(
+                "date", a.getAppointmentDate().toString(),
+                "barberName", a.getBarber() != null ? a.getBarber().getName() : "Nieznany",
+                "serviceType", a.getServiceType(),
+                "notes", a.getNotes() != null ? a.getNotes() : ""
+            ));
+        }
+
+        return Map.of(
+            "id", client.getId(),
+            "name", client.getName(),
+            "username", client.getUsername(),
+            "clientPreferences", client.getClientPreferences() != null ? client.getClientPreferences() : "",
+            "likedStyles", client.getLikedStyles() != null ? client.getLikedStyles() : "",
+            "winnerStyle", client.getWinnerStyle() != null ? client.getWinnerStyle() : "",
+            "appointments", apptsData
+        );
+    }
+
+    @GetMapping("/barber/search-clients")
+    @ResponseBody
+    public List<Map<String, Object>> searchClients(@RequestParam("query") String query) {
+        List<User> clients = userRepo.findByRole("KLIENT");
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (User c : clients) {
+            if (c.getName().toLowerCase().contains(query.toLowerCase()) ||
+                c.getUsername().toLowerCase().contains(query.toLowerCase())) {
+                result.add(Map.of(
+                    "id", c.getId(),
+                    "name", c.getName(),
+                    "username", c.getUsername()
+                ));
+            }
+        }
+        return result;
     }
 }
 

@@ -1,102 +1,455 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Panel Barbera</title>
+    <title>Panel Barbera - GENTLEMAN'S CLUB</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <h1>Witaj, <span th:text="${barber.name}"></span> (Barber)</h1>
-    <form th:action="@{/logout}" method="post">
-        <input type="submit" value="Wyloguj"/>
-    </form>
+    <div class="desktop-layout">
+        <!-- Persistent left sidebar navigation -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <h1 class="logo-title">GENTLEMAN'S</h1>
+                <div class="logo-subtitle">Barber Club</div>
+            </div>
 
-    <h2>Ustaw godziny i dni pracy</h2>
-    <div th:if="${param.hoursUpdated}">
-        <p class="success">Ustawienia pracy zostały zaktualizowane!</p>
+            <ul class="nav-links">
+                <li>
+                    <button class="nav-btn active" id="btn-schedule" onclick="switchScreen('schedule')">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Harmonogram Wizyt</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" id="btn-clients" onclick="switchScreen('clients')">
+                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span>Baza Klientów</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" id="btn-settings" onclick="switchScreen('settings')">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <span>Mój Grafik</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                    <div>
+                        <div style="font-weight:600; font-size:14px; color:#fff;" th:text="${barber.name}">Sebastian Master</div>
+                        <div style="font-size:11px; color:var(--text-muted);" th:text="${barber.title != null ? barber.title : 'Barber'}">Master Barber</div>
+                    </div>
+                </div>
+                <form th:action="@{/logout}" method="post" style="box-shadow:none; padding:0; background:none; width:100%; margin:0;">
+                    <button type="submit" class="premium-btn btn-secondary" style="width:100%; padding:10px; font-size:12px;">
+                        Wyloguj Się
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- ========================================== -->
+            <!-- SCREEN 1: SCHEDULE WORKSPACE -->
+            <!-- ========================================== -->
+            <section id="screen-schedule" class="desktop-screen active">
+                <div>
+                    <h1 class="section-title">Harmonogram Wizyt</h1>
+                    <p class="section-desc">Zarządzaj dzisiejszymi rezerwacjami i przeglądaj wymagania klientów</p>
+                </div>
+
+                <div th:if="${param.hoursUpdated}" class="alert alert-success">
+                    Ustawienia godzin pracy zostały pomyślnie zaktualizowane.
+                </div>
+                <div th:if="${param.preferencesSaved}" class="alert alert-success">
+                    Preferencje klienta zostały zapisane.
+                </div>
+
+                <div class="barber-workspace">
+                    <!-- Left column: Today's list -->
+                    <div class="workspace-left-panel">
+                        <h3 style="font-size:12px; text-transform:uppercase; color:var(--gold); font-weight:700; margin-bottom:8px; letter-spacing:1px;">Rezerwacje na Dziś</h3>
+                        
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <div th:each="v : ${appointments}" 
+                                 class="appointment-list-item"
+                                 th:data-id="${v.id}"
+                                 th:data-client-id="${v.client != null ? v.client.id : 0}"
+                                 th:data-client-name="${v.client != null ? v.client.name : 'brak danych'}"
+                                 th:data-client-username="${v.client != null ? v.client.username : ''}"
+                                 th:data-service="${v.serviceType}"
+                                 th:data-date="${#strings.replace(v.appointmentDate.toString(), 'T', ' ')}"
+                                 th:data-duration="${v.durationMinutes}"
+                                 th:data-notes="${v.notes != null ? v.notes : 'Brak dodatkowych uwag klienta'}"
+                                 onclick="selectAppointment(this)">
+                                 <div>
+                                     <span style="font-weight:700; color:#fff;" th:text="${#strings.substring(v.appointmentDate.toString(), 11, 16)}">12:00</span>
+                                     <div style="font-size:13px; color:var(--text-light); margin-top:2px;" th:text="${v.client != null ? v.client.name : 'brak danych'}">Jan Kowalski</div>
+                                 </div>
+                                 <span style="font-size:12px; font-weight:600; color:var(--gold);" th:text="${v.serviceType}">Włosy</span>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(appointments)}" style="text-align:center; padding:48px 20px; color:var(--text-muted); background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-xl);">
+                                <div style="font-size:32px; margin-bottom:12px;">📅</div>
+                                Brak zaplanowanych wizyt.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Main Client Profile Workspace -->
+                    <div class="workspace-main-view">
+                        <!-- Placeholder state (no client selected) -->
+                        <div id="workspace-placeholder" class="premium-card" style="text-align:center; padding:80px 40px; color:var(--text-muted);">
+                            <div style="font-size:48px; margin-bottom:16px; color:var(--gold);">💈</div>
+                            <h3 style="font-family:var(--font-serif); font-size:20px; color:#fff; margin-bottom:8px;">Wybierz rezerwację</h3>
+                            Kliknij na dowolną pozycję z lewej listy, aby załadować profil klienta, historię strzyżeń oraz preferencje.
+                        </div>
+
+                        <!-- Active profile state -->
+                        <div id="workspace-active" style="display:none; flex-direction:column; gap:24px;">
+                            
+                            <!-- Header Info -->
+                            <div class="premium-card" style="display:flex; justify-content:space-between; align-items:center; padding:20px 32px;">
+                                <div>
+                                    <h2 id="activeClientName" style="font-family:var(--font-serif); font-size:24px; color:var(--gold);">Jan Kowalski</h2>
+                                    <p id="activeClientUsername" style="font-size:13px; color:var(--text-muted);">jan.kowalski@gmail.com</p>
+                                </div>
+                                <div style="display:flex; gap:12px;">
+                                    <form th:action="@{/barber/appointment/delete/0}" method="post" id="cancelForm">
+                                        <button type="submit" class="premium-btn btn-secondary" style="border-color:#ef4444; color:#ef4444; padding:10px 18px; font-size:12px;">Anuluj tę wizytę</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Dual Workspace (Main Sections vs Sticky card) -->
+                            <div style="display:flex; gap:24px; align-items:flex-start;">
+                                
+                                <!-- Left side: Section A & B -->
+                                <div style="flex:1.4; display:flex; flex-direction:column; gap:24px;">
+                                    <!-- Section A: Visit Notes -->
+                                    <div class="premium-card" style="border-left:4px solid var(--gold);">
+                                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1px;">Sekcja A: Uwagi do nadchodzącej wizyty</span>
+                                        <p id="activeVisitNotes" style="font-size:14px; font-style:italic; line-height:1.6; color:var(--text-light); margin-top:8px; white-space:pre-wrap;"></p>
+                                    </div>
+
+                                    <!-- Section B: History of visits -->
+                                    <div class="premium-card">
+                                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1px; display:block; margin-bottom:16px;">Sekcja B: Historia Strzyżeń i Usług</span>
+                                        
+                                        <div class="desktop-table-container">
+                                            <table class="desktop-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Data</th>
+                                                        <th>Wykonawca</th>
+                                                        <th>Usługa</th>
+                                                        <th>Uwagi Klienta</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="activeHistoryBody">
+                                                    <!-- Filled dynamically -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right side: Section C (Sticky Card) -->
+                                <div style="flex:1; position:sticky; top:24px;">
+                                    <div class="premium-card sticky-preference-card">
+                                        <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:1.5px; display:block; margin-bottom:12px;">Sekcja C: Stałe Preferencje Klienta</span>
+                                        
+                                        <!-- Winner details -->
+                                        <div id="activeClientWinnerPanel" style="background-color:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:10px 14px; margin-bottom:16px; display:none;">
+                                            <span style="font-size:9px; text-transform:uppercase; color:var(--gold); font-weight:700;">Wymarzona fryzura (Zwycięzca gry):</span>
+                                            <p id="activeClientWinnerName" style="font-size:13px; font-weight:600; margin-top:2px;"></p>
+                                        </div>
+
+                                        <form th:action="@{/barber/client-preferences}" method="post" id="preferencesForm" style="box-shadow:none; padding:0; background:none; max-width:none; margin:0; display:flex; flex-direction:column; gap:12px;">
+                                            <input type="hidden" name="clientId" id="activePrefClientId"/>
+                                            <div class="form-group" style="margin-bottom:0;">
+                                                <textarea name="clientPreferences" id="activePrefTextarea" placeholder="Wpisz stałe uwagi o kliencie (np. preferencje napojów, styl cieniowania, zachowanie podczas wizyty)..." style="min-height:140px; font-size:13px;"></textarea>
+                                            </div>
+                                            <button type="submit" class="premium-btn" style="width:100%; padding:12px; font-size:12px;">Zapisz Stałe Preferencje</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SCREEN 2: CLIENT SEARCH -->
+            <!-- ========================================== -->
+            <section id="screen-clients" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Baza Klientów</h1>
+                    <p class="section-desc">Przeglądaj profile dżentelmenów zapisanych w bazie danych</p>
+                </div>
+
+                <div class="premium-card" style="display:flex; flex-direction:column; gap:20px; max-width:800px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label for="clientSearchInput">Wyszukaj Klienta</label>
+                        <input type="text" id="clientSearchInput" class="premium-input" placeholder="Wpisz imię lub login..." oninput="handleSearch()"/>
+                    </div>
+                    <ul id="searchResults" class="search-results" style="max-height: 250px;">
+                        <!-- Dynamic search items -->
+                    </ul>
+                </div>
+
+                <!-- Shared profile preview in search tab -->
+                <div id="searchProfileView" style="display:none; flex-direction:column; gap:24px;">
+                    <div class="premium-card" style="padding:20px 32px;">
+                        <h2 id="searchClientName" style="font-family:var(--font-serif); font-size:24px; color:var(--gold);">Mirek</h2>
+                        <p id="searchClientUsername" style="font-size:13px; color:var(--text-muted);">@klient1</p>
+                    </div>
+
+                    <div style="display:flex; gap:24px; align-items:flex-start;">
+                        <!-- History table -->
+                        <div class="premium-card" style="flex:1.4;">
+                            <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; display:block; margin-bottom:16px;">Historia Wizyt</span>
+                            <div class="desktop-table-container">
+                                <table class="desktop-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Wykonawca</th>
+                                            <th>Usługa</th>
+                                            <th>Uwagi Klienta</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="searchHistoryBody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Sticky preference box -->
+                        <div style="flex:1;">
+                            <div class="premium-card sticky-preference-card">
+                                <span style="font-size:11px; text-transform:uppercase; color:var(--gold); font-weight:700; display:block; margin-bottom:12px;">Stałe Preferencje Klienta</span>
+                                
+                                <div id="searchClientWinnerPanel" style="background-color:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:10px 14px; margin-bottom:16px; display:none;">
+                                    <span style="font-size:9px; text-transform:uppercase; color:var(--gold); font-weight:700;">Wymarzona fryzura:</span>
+                                    <p id="searchClientWinnerName" style="font-size:13px; font-weight:600; margin-top:2px;"></p>
+                                </div>
+
+                                <form th:action="@{/barber/client-preferences}" method="post" id="searchPreferencesForm" style="box-shadow:none; padding:0; background:none; max-width:none; margin:0; display:flex; flex-direction:column; gap:12px;">
+                                    <input type="hidden" name="clientId" id="searchPrefClientId"/>
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <textarea name="clientPreferences" id="searchPrefTextarea" placeholder="Wpisz uwagi o kliencie..." style="min-height:140px; font-size:13px;"></textarea>
+                                    </div>
+                                    <button type="submit" class="premium-btn" style="width:100%; padding:12px; font-size:12px;">Zapisz Preferencje</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SCREEN 3: SCHEDULE CONFIGURATION -->
+            <!-- ========================================== -->
+            <section id="screen-settings" class="desktop-screen">
+                <div>
+                    <h1 class="section-title">Konfiguracja Grafiku</h1>
+                    <p class="section-desc">Zarządzaj swoimi dniami oraz godzinami dostępności</p>
+                </div>
+
+                <form th:action="@{/barber/updateHours}" method="post" class="premium-card" style="max-width: 600px; display:flex; flex-direction:column; gap:20px;">
+                    <div class="form-group">
+                        <label>Godzina Rozpoczęcia Pracy</label>
+                        <select name="workStartHour">
+                            <option th:each="i : ${#numbers.sequence(0, 23)}" th:value="${i}"
+                                    th:text="${i} + ':00'"
+                                    th:selected="${barber.workStartHour != null && barber.workStartHour == i}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Godzina Zakończenia Pracy</label>
+                        <select name="workEndHour">
+                            <option th:each="i : ${#numbers.sequence(1, 24)}" th:value="${i}"
+                                    th:text="${i} + ':00'"
+                                    th:selected="${barber.workEndHour != null && barber.workEndHour == i}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom: 8px;">Dni Dostępności</label>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="1" th:checked="${barber.workDays != null && barber.workDays.contains('1')}"/> Poniedziałek
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="2" th:checked="${barber.workDays != null && barber.workDays.contains('2')}"/> Wtorek
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="3" th:checked="${barber.workDays != null && barber.workDays.contains('3')}"/> Środa
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="4" th:checked="${barber.workDays != null && barber.workDays.contains('4')}"/> Czwartek
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="5" th:checked="${barber.workDays != null && barber.workDays.contains('5')}"/> Piątek
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="6" th:checked="${barber.workDays != null && barber.workDays.contains('6')}"/> Sobota
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; font-weight:normal; font-size:14px; text-transform:none;">
+                                <input type="checkbox" name="workDays" value="7" th:checked="${barber.workDays != null && barber.workDays.contains('7')}"/> Niedziela
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="premium-btn" style="margin-top:10px;">Zapisz zmiany w grafiku</button>
+                </form>
+            </section>
+
+        </main>
     </div>
-    <form th:action="@{/barber/updateHours}" method="post">
-        <label>Godzina rozpoczęcia pracy:
-            <select name="workStartHour">
-                <option th:each="i : ${#numbers.sequence(0, 23)}" th:value="${i}"
-                        th:text="${i} + ':00'"
-                        th:selected="${barber.workStartHour != null && barber.workStartHour == i}"></option>
-            </select>
-        </label>
-        <label>Godzina zakończenia pracy:
-            <select name="workEndHour">
-                <option th:each="i : ${#numbers.sequence(1, 24)}" th:value="${i}"
-                        th:text="${i} + ':00'"
-                        th:selected="${barber.workEndHour != null && barber.workEndHour == i}"></option>
-            </select>
-        </label>
-        <fieldset>
-            <legend>Dni pracy:</legend>
-            <label><input type="checkbox" name="workDays" value="1" th:checked="${barber.workDays != null && barber.workDays.contains('1')}"/> Poniedziałek</label>
-            <label><input type="checkbox" name="workDays" value="2" th:checked="${barber.workDays != null && barber.workDays.contains('2')}"/> Wtorek</label>
-            <label><input type="checkbox" name="workDays" value="3" th:checked="${barber.workDays != null && barber.workDays.contains('3')}"/> Środa</label>
-            <label><input type="checkbox" name="workDays" value="4" th:checked="${barber.workDays != null && barber.workDays.contains('4')}"/> Czwartek</label>
-            <label><input type="checkbox" name="workDays" value="5" th:checked="${barber.workDays != null && barber.workDays.contains('5')}"/> Piątek</label>
-            <label><input type="checkbox" name="workDays" value="6" th:checked="${barber.workDays != null && barber.workDays.contains('6')}"/> Sobota</label>
-            <label><input type="checkbox" name="workDays" value="7" th:checked="${barber.workDays != null && barber.workDays.contains('7')}"/> Niedziela</label>
-        </fieldset>
-        <input type="submit" value="Zapisz ustawienia"/>
-    </form>
-    <p th:if="${barber.workStartHour != null && barber.workEndHour != null}">
-        Aktualne godziny pracy: <span th:text="${barber.workStartHour}"></span>:00 - <span th:text="${barber.workEndHour}"></span>:00
-    </p>
-    <p th:if="${barber.workDays != null && !barber.workDays.isEmpty()}">
-        Dni pracy: <span th:text="${barber.workDays.replace('1','Pn ').replace('2','Wt ').replace('3','Śr ').replace('4','Cz ').replace('5','Pt ').replace('6','So ').replace('7','Nd ').replace(',','')}"></span>
-    </p>
-    <p th:if="${barber.workStartHour == null || barber.workEndHour == null}">
-        Godziny pracy nie zostały jeszcze ustawione.
-    </p>
 
-    <h2>Twój harmonogram</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Klient</th>
-                <th>Usługa</th>
-                <th>Czas trwania</th>
-                <th>Akcje</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="v : ${appointments}">
-                <td th:text="${v.appointmentDate}"></td>
-                <td th:text="${v.client != null ? v.client.name : 'brak danych'}"></td>
-                <td th:text="${v.serviceType}"></td>
-                <td th:text="${v.durationMinutes} + ' min'"></td>
-                <td>
-                    <form th:action="@{/barber/appointment/delete/{id}(id=${v.id})}" method="post">
-                        <input type="submit" value="Anuluj"/>
-                    </form>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- Scripting logic -->
+    <script>
+        // Tab switching
+        function switchScreen(screenId) {
+            document.querySelectorAll('.desktop-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
 
-    <h2>Wszystkie zapisy (wszystkich Barberów)</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Barber</th>
-                <th>Klient</th>
-                <th>Usługa</th>
-                <th>Czas trwania</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="v : ${allAppointments}">
-                <td th:text="${v.appointmentDate}"></td>
-                <td th:text="${v.barber != null ? v.barber.name : 'brak danych'}"></td>
-                <td th:text="${v.client != null ? v.client.name : 'brak danych'}"></td>
-                <td th:text="${v.serviceType}"></td>
-                <td th:text="${v.durationMinutes} + ' min'"></td>
-            </tr>
-        </tbody>
-    </table>
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            
+            const btn = document.getElementById(`btn-${screenId}`);
+            if (btn) btn.classList.add('active');
+        }
+
+        // ==========================================
+        // SELECT APPOINTMENT & LOAD CLIENT PROFILE
+        // ==========================================
+        function selectAppointment(cardElement) {
+            document.querySelectorAll('.appointment-list-item').forEach(card => {
+                card.classList.remove('selected');
+            });
+            cardElement.classList.add('selected');
+
+            const apptId = cardElement.getAttribute('data-id');
+            const clientId = cardElement.getAttribute('data-client-id');
+            const clientName = cardElement.getAttribute('data-client-name');
+            const clientUsername = cardElement.getAttribute('data-client-username');
+            const notes = cardElement.getAttribute('data-notes');
+
+            // Setup profile data
+            document.getElementById('activeClientName').textContent = clientName;
+            document.getElementById('activeClientUsername').textContent = clientUsername ? `@${clientUsername}` : '';
+            document.getElementById('activeVisitNotes').textContent = notes;
+
+            // Setup cancel action
+            document.getElementById('cancelForm').action = `/barber/appointment/delete/${apptId}`;
+
+            // Load extra preferences and history dynamically
+            loadClientDetails(clientId, 'active');
+
+            // Show workspace
+            document.getElementById('workspace-placeholder').style.display = 'none';
+            document.getElementById('workspace-active').style.display = 'flex';
+        }
+
+        function loadClientDetails(clientId, tabPrefix) {
+            fetch(`/barber/client-details/${clientId}`)
+                .then(response => response.json())
+                .then(c => {
+                    // Fill forms
+                    document.getElementById(`${tabPrefix}PrefClientId`).value = c.id;
+                    document.getElementById(`${tabPrefix}PrefTextarea`).value = c.clientPreferences;
+
+                    // Winner style
+                    const winnerPanel = document.getElementById(`${tabPrefix}ClientWinnerPanel`);
+                    if (c.winnerStyle) {
+                        document.getElementById(`${tabPrefix}ClientWinnerName`).textContent = c.winnerStyle;
+                        winnerPanel.style.display = 'block';
+                    } else {
+                        winnerPanel.style.display = 'none';
+                    }
+
+                    // Table history
+                    const historyBody = document.getElementById(`${tabPrefix}HistoryBody`);
+                    historyBody.innerHTML = '';
+
+                    if (c.appointments && c.appointments.length > 0) {
+                        c.appointments.forEach(a => {
+                            const dateStr = a.date.replace('T', ' ');
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td style="font-weight:600; color:var(--gold);">${dateStr}</td>
+                                <td>${a.barberName}</td>
+                                <td style="font-weight:600;">${a.serviceType}</td>
+                                <td style="font-style:italic; color:var(--text-muted);">${a.notes ? a.notes : 'Brak'}</td>
+                            `;
+                            historyBody.appendChild(tr);
+                        });
+                    } else {
+                        historyBody.innerHTML = `
+                            <tr>
+                                <td colspan="4" style="text-align:center; color:var(--text-muted); padding:32px;">Brak historii wizyt.</td>
+                            </tr>
+                        `;
+                    }
+                });
+        }
+
+        // ==========================================
+        // CLIENT SEARCH SYSTEM (TAB 2)
+        // ==========================================
+        function handleSearch() {
+            const query = document.getElementById('clientSearchInput').value;
+            const resultsUl = document.getElementById('searchResults');
+            
+            if (query.trim().length === 0) {
+                resultsUl.innerHTML = '';
+                return;
+            }
+
+            fetch(`/barber/search-clients?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(clients => {
+                    resultsUl.innerHTML = '';
+                    clients.forEach(c => {
+                        const li = document.createElement('li');
+                        li.className = 'search-results-item';
+                        li.textContent = `${c.name} (${c.username})`;
+                        li.onclick = () => selectSearchClient(c.id);
+                        resultsUl.appendChild(li);
+                    });
+                });
+        }
+
+        function selectSearchClient(clientId) {
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('clientSearchInput').value = '';
+
+            fetch(`/barber/client-details/${clientId}`)
+                .then(response => response.json())
+                .then(c => {
+                    document.getElementById('searchClientName').textContent = c.name;
+                    document.getElementById('searchClientUsername').textContent = `@${c.username}`;
+                    
+                    loadClientDetails(c.id, 'search');
+                    
+                    document.getElementById('searchProfileView').style.display = 'flex';
+                });
+        }
+    </script>
 </body>
 </html>
