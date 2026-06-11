@@ -123,6 +123,7 @@
                     <div id="barber-bio-panel" class="premium-card" style="display:none; border-left: 3px solid var(--gold); max-width: 800px;">
                         <h3 style="color:var(--gold); font-family:var(--font-serif); font-size:16px;">O wybranym styliście</h3>
                         <p id="barber-bio-text" style="color:var(--text-muted); font-size:14px; line-height:1.6; margin-top:8px; font-style:italic;"></p>
+                        <a id="barber-profile-link" href="#" style="color: var(--gold); font-weight: 600; text-decoration: none; display: inline-block; margin-top: 12px; border-bottom: 1px solid var(--gold); padding-bottom: 2px; font-size: 13px;">Zobacz pełną stronę i certyfikaty →</a>
                     </div>
 
                     <!-- 2. Booking details panel -->
@@ -334,6 +335,7 @@
         /*[# th:each="b : ${barbers}"]*/
         barberData.push({
             id: /*[[${b.id}]]*/ 0,
+            username: /*[[${b.username}]]*/ '',
             name: /*[[${b.name}]]*/ '',
             bio: /*[[${b.bio}]]*/ '',
             start: /*[[${b.workStartHour}]]*/ 8,
@@ -366,6 +368,7 @@
             const barberObj = barberData.find(b => b.id == barberId);
             if (barberObj && barberObj.bio) {
                 document.getElementById('barber-bio-text').textContent = barberObj.bio;
+                document.getElementById('barber-profile-link').href = '/barber-info/' + barberObj.username;
                 document.getElementById('barber-bio-panel').style.display = 'block';
             } else {
                 document.getElementById('barber-bio-panel').style.display = 'none';

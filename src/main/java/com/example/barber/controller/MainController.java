@@ -258,6 +258,22 @@ public class MainController {
         return result;
     }
 
+    public static class CertInfo {
+        private final String image;
+        private final String title;
+        private final String description;
+
+        public CertInfo(String image, String title, String description) {
+            this.image = image;
+            this.title = title;
+            this.description = description;
+        }
+
+        public String getImage() { return image; }
+        public String getTitle() { return title; }
+        public String getDescription() { return description; }
+    }
+
     @GetMapping("/barber-info/{username}")
     public String barberInfo(@PathVariable("username") String username, Model model) {
         User barber = userRepo.findByUsername(username);
@@ -284,6 +300,34 @@ public class MainController {
             workDaysFormatted = String.join(", ", dayNames);
         }
         model.addAttribute("workDaysFormatted", workDaysFormatted);
+
+        CertInfo certInfo;
+        if ("barber1".equals(username)) {
+            certInfo = new CertInfo(
+                "/img/cert1.png",
+                "Certyfikat Mistrza Klasycznego Strzyżenia",
+                "Ten prestiżowy certyfikat poświadcza najwyższe kwalifikacje Janusza Książkiewicza w zakresie klasycznej szkoły fryzjerstwa męskiego. Przyznany przez Międzynarodową Akademię Barberingu za mistrzowskie opanowanie tradycyjnego golenia brzytwą z rytuałem gorącego ręcznika oraz perfekcyjne cięcia typu Pompadour i Side Part."
+            );
+        } else if ("barber2".equals(username)) {
+            certInfo = new CertInfo(
+                "/img/cert2.png",
+                "Certyfikat Nowoczesnych Technik Cieniowania",
+                "Certyfikat przyznany Andrzejowi za wybitną precyzję w nowoczesnych technikach cieniowania (Low, Mid, High Fade) oraz geometrii męskiego zarostu. Szkolenie ukończone pod okiem czołowych światowych edukatorów, potwierdzające mistrzostwo w stylu Street i Modern Barbering."
+            );
+        } else if ("barber3".equals(username)) {
+            certInfo = new CertInfo(
+                "/img/cert3.png",
+                "Certyfikat Stylistyki i Koloryzacji Męskiej",
+                "Certyfikat poświadcza ekspercką wiedzę Krzysztofa w doborze fryzur do kształtu głowy i budowy twarzy (Visagisme) oraz zaawansowanej koloryzacji i maskowania siwizny. Przyznany za innowacyjne podejście do stylizacji i kreacji nowoczesnego wizerunku dżentelmena."
+            );
+        } else {
+            certInfo = new CertInfo(
+                "/img/cert1.png",
+                "Certyfikat Profesjonalnego Barbera",
+                "Certyfikat potwierdzający kwalifikacje zawodowe, dbałość o najwyższe standardy higieny oraz profesjonalną obsługę klienta w salonach klasy premium."
+            );
+        }
+        model.addAttribute("cert", certInfo);
 
         return "barber_info";
     }
