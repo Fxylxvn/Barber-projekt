@@ -51,6 +51,11 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login")
                         .permitAll()
                 )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.sendRedirect("/");
+                        })
+                )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         // Add JWT filter
