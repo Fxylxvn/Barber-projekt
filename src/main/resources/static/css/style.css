@@ -870,3 +870,32 @@ textarea {
 .chatbot-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .chatbot-send-btn svg { width: 18px; height: 18px; fill: #000; }
 .chatbot-bubble.bot strong { color: var(--gold); }
+
+/* ========================================== */
+/* LOYALTY PROGRAM WIDGET                     */
+/* ========================================== */
+.loyalty-widget {
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 0;
+}
+.loyalty-bar-bg {
+    height: 6px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 2px;
+}
+.loyalty-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+/* Price classes in visits table */
+.loyalty-price { color: var(--gold); }
+.normal-price  { color: var(--text-light); }

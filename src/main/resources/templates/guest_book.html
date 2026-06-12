@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Rezerwacja bez konta - GENTLEMAN'S CLUB</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Zarezerwuj wizytę u barbera bez zakładania konta. Szybka rezerwacja online w GENTLEMAN'S CLUB Barber Club."/>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <style>
+        .guest-layout {
+            min-height: 100vh;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+        }
+        .guest-header {
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .guest-header-logo { display: flex; flex-direction: column; }
+        .guest-header-logo .logo-title { font-size: 20px; }
+        .guest-header-links { display: flex; gap: 16px; align-items: center; }
+        .guest-header-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .guest-header-links a:hover { color: var(--gold); }
+        .guest-header-links .login-link {
+            color: var(--gold);
+            border: 1px solid rgba(212,175,55,0.4);
+            padding: 8px 20px;
+            border-radius: var(--radius-md);
+            transition: background 0.2s;
+        }
+        .guest-header-links .login-link:hover {
+            background: rgba(212,175,55,0.1);
+        }
+
+        .guest-hero {
+            background: linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(0,0,0,0) 60%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 40px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+        }
+        .guest-hero h1 {
+            font-family: var(--font-serif);
+            font-size: 36px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        .guest-hero h1 span { color: var(--gold); }
+        .guest-hero p { color: var(--text-muted); font-size: 15px; line-height: 1.6; max-width: 500px; }
+
+        /* Price comparison banner */
+        .price-banner {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .price-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .price-pill.guest-pill {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+        }
+        .price-pill.member-pill {
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.2);
+            color: #4ade80;
+        }
+        .price-pill.loyalty-pill {
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.25);
+            color: var(--gold);
+        }
+
+        .guest-main {
+            padding: 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .guest-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 40px;
+            align-items: start;
+        }
+        .guest-form-area { display: flex; flex-direction: column; gap: 32px; }
+
+        /* Savings panel */
+        .savings-panel {
+            background: var(--bg-card);
+            border: 1px solid rgba(212,175,55,0.25);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 90px;
+        }
+        .savings-panel-title {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+        .savings-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .savings-table th {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .savings-table td { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .savings-table td:last-child { text-align: right; }
+        .price-guest-td { color: #f87171; font-weight: 600; }
+        .price-member-td { color: var(--text-light); }
+        .price-loyalty-td { color: var(--gold); font-weight: 700; }
+        .savings-cta {
+            background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(212,175,55,0.03));
+            border: 1px solid rgba(212,175,55,0.2);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            text-align: center;
+        }
+        .savings-cta p { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; }
+        .savings-cta strong { color: var(--gold); }
+    </style>
+</head>
+<body>
+<div class="guest-layout">
+
+    <!-- Header -->
+    <header class="guest-header">
+        <div class="guest-header-logo">
+            <h1 class="logo-title">GENTLEMAN'S</h1>
+            <div class="logo-subtitle">Barber Club</div>
+        </div>
+        <div class="guest-header-links">
+            <a href="/login">Masz konto? Zaloguj się</a>
+            <a href="/register">Zarejestruj się</a>
+            <a href="/login" class="login-link">Zaloguj się →</a>
+        </div>
+    </header>
+
+    <!-- Hero section -->
+    <div class="guest-hero">
+        <div>
+            <h1>Rezerwacja <span>bez konta</span></h1>
+            <p>Zarezerwuj wizytę szybko i bezproblemowo. Pamiętaj – zalogowani klienci płacą mniej i zbierają punkty lojalnościowe.</p>
+            <div class="price-banner" style="margin-top:20px;">
+                <div class="price-pill guest-pill">👤 Gość: cena podstawowa +25%</div>
+                <div class="price-pill member-pill">✓ Zalogowany: cena podstawowa</div>
+                <div class="price-pill loyalty-pill">🏆 Co 5. wizyta: -30% zniżki</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="guest-main">
+        <div class="guest-grid">
+            <!-- Form -->
+            <div class="guest-form-area">
+
+                <!-- Alerts -->
+                <div th:if="${param.error != null and #arrays.contains(param.error,'Zajete')}" class="alert alert-error">
+                    Barber jest już zajęty w wybranej godzinie! Wybierz inną godzinę.
+                </div>
+                <div th:if="${param.error != null and #arrays.contains(param.error,'PozaGodzinami')}" class="alert alert-error">
+                    Wybrana godzina wykracza poza standardowy grafik pracy barbera.
+                </div>
+                <div th:if="${param.error != null and #arrays.contains(param.error,'DzienWolny')}" class="alert alert-error">
+                    Wybrany barber nie pracuje w tym dniu tygodnia.
+                </div>
+                <div th:if="${param.error != null and #arrays.contains(param.error,'NieprawidlowaMinuta')}" class="alert alert-error">
+                    Rezerwacje przyjmowane są co 15 minut (np. 12:00, 12:15, 12:30).
+                </div>
+                <div th:if="${param.success != null}" class="alert alert-success">
+                    🎉 Wizyta zarezerwowana! Sprawdź swojego e-maila w celu potwierdzenia. Dziękujemy za wybór GENTLEMAN'S CLUB!
+                </div>
+
+                <form action="/book-guest" method="post" id="guestBookForm" style="display:flex;flex-direction:column;gap:32px;">
+
+                    <!-- Krok 1: Barber -->
+                    <div class="premium-card">
+                        <label style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:700;display:block;margin-bottom:16px;">
+                            Krok 1 · Wybierz Barbera
+                        </label>
+                        <div class="barber-grid">
+                            <div th:each="b : ${barbers}"
+                                 class="barber-card"
+                                 th:data-id="${b.id}"
+                                 th:data-start="${b.workStartHour}"
+                                 th:data-end="${b.workEndHour}"
+                                 th:data-days="${b.workDays}"
+                                 th:data-bio="${b.bio}"
+                                 th:data-username="${b.username}"
+                                 onclick="selectBarberGuest(this)">
+                                <img th:src="${b.photoUrl != null ? b.photoUrl : 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300'}" alt="Barber"/>
+                                <div class="name" th:text="${b.name}">Barber</div>
+                                <div class="title" th:text="${b.title != null ? b.title : 'Barber'}">Master</div>
+                                <div class="rating"><span>★</span> <span th:text="${b.rating != null ? b.rating : '5.0'}">5.0</span></div>
+                                <div class="select-indicator">
+                                    <button type="button" class="premium-btn btn-secondary" style="width:100%;padding:10px;font-size:12px;pointer-events:none;">Wybierz</button>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="barberId" id="guestBarberId" required/>
+                    </div>
+
+                    <!-- Krok 2: Termin i usługa -->
+                    <div class="premium-card" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;">
+                        <div class="form-group">
+                            <label for="guestServiceType">Usługa</label>
+                            <select name="serviceType" id="guestServiceType" required onchange="updateGuestTimes(); updateGuestPrice()">
+                                <option value="Włosy">Strzyżenie włosów (45 min)</option>
+                                <option value="Broda">Trymowanie brody (30 min)</option>
+                                <option value="Włosy + Broda">Combo: Włosy + Broda (75 min)</option>
+                                <option value="Klata">Golenie klatki (15 min)</option>
+                                <option value="Wszystko">Królewski pakiet (90 min)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="guestDateOnly">Data Wizyty</label>
+                            <input type="date" id="guestDateOnly" class="premium-input" required onchange="validateGuestWorkDay(); updateGuestTimes(); updateGuestPrice()"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="guestTimeOnly">Godzina</label>
+                            <select id="guestTimeOnly" required>
+                                <option value="">-- Najpierw wybierz barbera --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Krok 3: Twoje dane -->
+                    <div class="premium-card">
+                        <label style="font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:700;display:block;margin-bottom:20px;">
+                            Krok 3 · Twoje Dane Kontaktowe
+                        </label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="guestName">Imię i Nazwisko</label>
+                                <input type="text" name="guestName" id="guestName" class="premium-input" placeholder="Jan Kowalski" required/>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="guestEmail">Adres E-mail</label>
+                                <input type="email" name="guestEmail" id="guestEmail" class="premium-input" placeholder="jan@email.pl" required/>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="guestPhone">Numer Telefonu</label>
+                                <input type="tel" name="guestPhone" id="guestPhone" class="premium-input" placeholder="+48 600 000 000" required/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Krok 4: Uwagi -->
+                    <div class="premium-card">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="guestNotes">Uwagi (opcjonalne)</label>
+                            <textarea name="notes" id="guestNotes" placeholder="Opisz swoje oczekiwania..." maxlength="1000"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Cena i przycisk -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+                        <div id="price-display" style="display:flex;flex-direction:column;gap:4px;">
+                            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Cena za wizytę (gość)</div>
+                            <div style="font-size:28px;font-family:var(--font-serif);color:#f87171;font-weight:700;" id="price-amount">– zł</div>
+                            <div style="font-size:12px;color:var(--text-muted);" id="price-compare"></div>
+                        </div>
+                        <input type="hidden" name="date" id="guestFullDateTime"/>
+                        <button type="submit" class="premium-btn" style="min-width:280px;background:linear-gradient(135deg,#d4af37,#b89028);">
+                            Potwierdź rezerwację →
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Savings sidebar -->
+            <div class="savings-panel">
+                <div>
+                    <div class="savings-panel-title">💰 Ile zaoszczędzisz?</div>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:6px;line-height:1.6;">
+                        Zalogowani klienci płacą mniej. Co 5. wizyta automatyczna zniżka -30%!
+                    </p>
+                </div>
+
+                <table class="savings-table">
+                    <thead>
+                        <tr>
+                            <th>Usługa</th>
+                            <th>Gość</th>
+                            <th>Klient</th>
+                            <th>5. wizyta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strzyżenie</td>
+                            <td class="price-guest-td">63 zł</td>
+                            <td class="price-member-td">50 zł</td>
+                            <td class="price-loyalty-td">35 zł</td>
+                        </tr>
+                        <tr>
+                            <td>Broda</td>
+                            <td class="price-guest-td">44 zł</td>
+                            <td class="price-member-td">35 zł</td>
+                            <td class="price-loyalty-td">25 zł</td>
+                        </tr>
+                        <tr>
+                            <td>Włosy + Broda</td>
+                            <td class="price-guest-td">94 zł</td>
+                            <td class="price-member-td">75 zł</td>
+                            <td class="price-loyalty-td">53 zł</td>
+                        </tr>
+                        <tr>
+                            <td>Klata</td>
+                            <td class="price-guest-td">25 zł</td>
+                            <td class="price-member-td">20 zł</td>
+                            <td class="price-loyalty-td">14 zł</td>
+                        </tr>
+                        <tr>
+                            <td>Pakiet ALL</td>
+                            <td class="price-guest-td">150 zł</td>
+                            <td class="price-member-td">120 zł</td>
+                            <td class="price-loyalty-td">84 zł</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="savings-cta">
+                    <p>Zarejestruj się <strong>bezpłatnie</strong> i zaoszczędź na każdej wizycie. Co 5. strzyżenie nawet <strong>-30%</strong>!</p>
+                    <a href="/register" class="premium-btn" style="display:block;text-align:center;text-decoration:none;padding:12px;">
+                        Zarejestruj się za darmo
+                    </a>
+                    <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">lub <a href="/login" style="color:var(--gold);">zaloguj się</a> jeśli masz konto</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const guestBarberData = [];
+    /*[# th:each="b : ${barbers}"]*/
+    guestBarberData.push({
+        id: /*[[${b.id}]]*/ 0,
+        username: /*[[${b.username}]]*/ '',
+        name: /*[[${b.name}]]*/ '',
+        bio: /*[[${b.bio}]]*/ '',
+        start: /*[[${b.workStartHour}]]*/ 8,
+        end: /*[[${b.workEndHour}]]*/ 18,
+        days: /*[[${b.workDays}]]*/ ''
+    });
+    /*[/]*/
+
+    const guestAppointments = [];
+    /*[# th:each="appt : ${allAppointments}"]*/
+    guestAppointments.push({
+        barberId: /*[[${appt.barber != null ? appt.barber.id : 0}]]*/ 0,
+        date: /*[[${appt.appointmentDate != null ? appt.appointmentDate.toString() : ''}]]*/ '',
+        duration: /*[[${appt.durationMinutes != null ? appt.durationMinutes : 60}]]*/ 60
+    });
+    /*[/]*/
+
+    const guestServiceDurations = { 'Włosy': 45, 'Broda': 30, 'Włosy + Broda': 75, 'Klata': 15, 'Wszystko': 90 };
+    const guestBasePrices     = { 'Włosy': 50, 'Broda': 35, 'Włosy + Broda': 75, 'Klata': 20, 'Wszystko': 120 };
+
+    let selectedGuestBarberDays = '';
+    const dayNames = ['Niedziela','Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota'];
+
+    function selectBarberGuest(cardEl) {
+        document.querySelectorAll('.barber-card').forEach(c => {
+            c.classList.remove('selected');
+            const b = c.querySelector('button');
+            if (b) { b.classList.add('btn-secondary'); b.textContent = 'Wybierz'; }
+        });
+        cardEl.classList.add('selected');
+        const btn = cardEl.querySelector('button');
+        if (btn) { btn.classList.remove('btn-secondary'); btn.textContent = 'Wybrany'; }
+
+        const id = cardEl.getAttribute('data-id');
+        document.getElementById('guestBarberId').value = id;
+        selectedGuestBarberDays = cardEl.getAttribute('data-days') || '';
+        validateGuestWorkDay();
+        updateGuestTimes();
+        updateGuestPrice();
+    }
+
+    function validateGuestWorkDay() {
+        const dateStr = document.getElementById('guestDateOnly').value;
+        if (!dateStr || !selectedGuestBarberDays) return true;
+        const d = new Date(dateStr);
+        const jsDOW = d.getDay();
+        const javaDOW = jsDOW === 0 ? 7 : jsDOW;
+        if (!selectedGuestBarberDays.includes(String(javaDOW))) {
+            alert('Wybrany barber nie pracuje w ' + dayNames[jsDOW] + '. Proszę wybrać inną datę.');
+            document.getElementById('guestDateOnly').value = '';
+            return false;
+        }
+        return true;
+    }
+
+    function updateGuestTimes() {
+        const barberId = document.getElementById('guestBarberId').value;
+        const dateStr  = document.getElementById('guestDateOnly').value;
+        const service  = document.getElementById('guestServiceType').value;
+        const sel      = document.getElementById('guestTimeOnly');
+        if (!barberId) { sel.innerHTML = '<option value="">-- Najpierw wybierz barbera --</option>'; return; }
+        if (!dateStr)  { sel.innerHTML = '<option value="">-- Wybierz datę --</option>'; return; }
+
+        const card = document.querySelector(`.barber-card[data-id="${barberId}"]`);
+        const startH = parseInt(card.getAttribute('data-start')) || 8;
+        const endH   = parseInt(card.getAttribute('data-end'))   || 18;
+
+        const booked = guestAppointments
+            .filter(a => a.barberId == barberId && a.date && a.date.startsWith(dateStr))
+            .map(a => {
+                const [h, m] = a.date.split('T')[1].split(':').map(Number);
+                const s = h*60+m;
+                return { start: s, end: s + a.duration };
+            });
+
+        const dur = guestServiceDurations[service] || 60;
+        sel.innerHTML = '<option value="">-- Wybierz godzinę --</option>';
+        for (let h = startH; h < endH; h++) {
+            for (let m = 0; m < 60; m += 15) {
+                const ss = h*60+m, se = ss+dur;
+                if (se > endH*60) continue;
+                if (booked.some(b => ss < b.end && se > b.start)) continue;
+                const t = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+                const o = document.createElement('option');
+                o.value = t; o.textContent = t;
+                sel.appendChild(o);
+            }
+        }
+        if (sel.options.length <= 1) sel.innerHTML = '<option value="">-- Brak wolnych terminów --</option>';
+    }
+
+    function updateGuestPrice() {
+        const service = document.getElementById('guestServiceType').value;
+        const base = guestBasePrices[service] || 50;
+        const guestPrice = Math.ceil(base * 1.25);
+        document.getElementById('price-amount').textContent = guestPrice + ' zł';
+        document.getElementById('price-compare').textContent =
+            'Cena dla zalogowanych: ' + base + ' zł (oszczędzasz ' + (guestPrice - base) + ' zł)';
+    }
+
+    // Form submit
+    document.getElementById('guestBookForm').addEventListener('submit', function(e) {
+        if (!document.getElementById('guestBarberId').value) {
+            e.preventDefault(); alert('Proszę wybrać barbera.'); return;
+        }
+        const d = document.getElementById('guestDateOnly').value;
+        const t = document.getElementById('guestTimeOnly').value;
+        if (!d || !t || t === '') {
+            e.preventDefault(); alert('Proszę wybrać datę i godzinę.'); return;
+        }
+        document.getElementById('guestFullDateTime').value = d + 'T' + t;
+    });
+
+    // Init
+    updateGuestPrice();
+</script>
+</body>
+</html>
