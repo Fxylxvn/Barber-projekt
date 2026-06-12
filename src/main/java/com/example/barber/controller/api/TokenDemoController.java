@@ -16,61 +16,60 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Kontroler REST służący do demonstracji i diagnostyki mechanizmu JWT.
- *
- * <p>Dostępny pod ścieżką bazową {@code /api/demo}. Umożliwia ręczne
- * sprawdzenie (zweryfikowanie) tokenu JWT – przydatne podczas developmentu
- * i uczenia się działania systemu autoryzacji.</p>
- *
- * <p>Endpoint odczytuje token z nagłówka HTTP, weryfikuje jego podpis i datę ważności,
- * a następnie zwraca wszystkie zawarte w nim informacje (username, role, daty)
- * w formacie JSON.</p>
- *
- * <p><b>Uwaga:</b> Ten kontroler jest przeznaczony wyłącznie do celów demonstracyjnych
- * i nie powinien być eksponowany w środowisku produkcyjnym bez dodatkowego zabezpieczenia.</p>
+/*
+  Kontroler REST służący do demonstracji i diagnostyki mechanizmu JWT.
+
+  <p>Dostępny pod ścieżką bazową {@code /api/demo}. Umożliwia ręczne
+  sprawdzenie (zweryfikowanie) tokenu JWT – przydatne podczas developmentu
+  i uczenia się działania systemu autoryzacji.</p>
+
+  <p>Endpoint odczytuje token z nagłówka HTTP, weryfikuje jego podpis i datę ważności,
+  a następnie zwraca wszystkie zawarte w nim informacje (username, role, daty)
+  w formacie JSON.</p>
+
+  <p><b>Uwaga:</b> Ten kontroler jest przeznaczony wyłącznie do celów demonstracyjnych
+  i nie powinien być eksponowany w środowisku produkcyjnym bez dodatkowego zabezpieczenia.</p>
  */
 @RestController
 @RequestMapping("/api/demo")
 public class TokenDemoController {
 
-    /** Narzędzie do operacji na tokenach JWT. */
+    // Narzędzie do operacji na tokenach JWT.
     private final JwtUtils jwtUtils;
 
-    /**
-     * Tajny klucz JWT wczytywany z konfiguracji aplikacji.
-     * Musi być identyczny z kluczem używanym podczas generowania tokenów.
+    /*
+      Tajny klucz JWT wczytywany z konfiguracji aplikacji.
+      Musi być identyczny z kluczem używanym podczas generowania tokenów.
      */
     @Value("${barber.app.jwtSecret:myVerySecretKeyForBarberAppThatIsAtLeast32CharactersLong}")
     private String jwtSecret;
 
-    /**
-     * Konstruktor wstrzykujący narzędzie JWT przez Spring.
-     *
-     * @param jwtUtils narzędzie do obsługi tokenów JWT
+    /*
+      Konstruktor wstrzykujący narzędzie JWT przez Spring.
+      @param jwtUtils narzędzie do obsługi tokenów JWT
      */
     public TokenDemoController(JwtUtils jwtUtils) {
         this.jwtUtils = jwtUtils;
     }
 
-    /**
-     * Weryfikuje token JWT przesłany w nagłówku i zwraca jego zawartość.
-     *
-     * <p>Nagłówek musi mieć format: {@code Authorization: Bearer <token>}.
-     * W odpowiedzi zwracane są:
-     * <ul>
-     *   <li>{@code message} – komunikat potwierdzający poprawność tokenu.</li>
-     *   <li>{@code username} – nazwa użytkownika zapisana w tokenie.</li>
-     *   <li>{@code roles} – lista ról użytkownika z tokenu.</li>
-     *   <li>{@code expiration} – data i czas wygaśnięcia tokenu.</li>
-     *   <li>{@code authenticated_user} – użytkownik z kontekstu Spring Security (jeśli dostępny).</li>
-     *   <li>{@code authorities} – uprawnienia z kontekstu Spring Security.</li>
-     * </ul>
-     * </p>
-     *
-     * @param authHeader zawartość nagłówka {@code Authorization}
-     * @return {@code 200 OK} z mapą danych tokenu lub
-     *         {@code 400 Bad Request} jeśli nagłówek jest nieprawidłowy lub token nieważny
+    /*
+      Weryfikuje token JWT przesłany w nagłówku i zwraca jego zawartość.
+
+      <p>Nagłówek musi mieć format: {@code Authorization: Bearer <token>}.
+      W odpowiedzi zwracane są:
+      <ul>
+        <li>{@code message} – komunikat potwierdzający poprawność tokenu.</li>
+        <li>{@code username} – nazwa użytkownika zapisana w tokenie.</li>
+        <li>{@code roles} – lista ról użytkownika z tokenu.</li>
+        <li>{@code expiration} – data i czas wygaśnięcia tokenu.</li>
+        <li>{@code authenticated_user} – użytkownik z kontekstu Spring Security (jeśli dostępny).</li>
+        <li>{@code authorities} – uprawnienia z kontekstu Spring Security.</li>
+      </ul>
+      </p>
+
+      @param authHeader zawartość nagłówka {@code Authorization}
+      @return {@code 200 OK} z mapą danych tokenu lub
+              {@code 400 Bad Request} jeśli nagłówek jest nieprawidłowy lub token nieważny
      */
     @GetMapping("/verify-token")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization") String authHeader) {

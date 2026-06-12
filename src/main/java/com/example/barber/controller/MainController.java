@@ -25,45 +25,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Główny kontroler MVC aplikacji Barber obsługujący widoki webowe (Thymeleaf).
- *
- * <p>Odpowiada za renderowanie stron HTML dla wszystkich użytkowników systemu:
- * klientów, barberów oraz gości. W odróżnieniu od kontrolerów REST ({@code /api/**})
- * zwraca nazwy szablonów Thymeleaf, które są renderowane przez serwer do HTML.</p>
- *
- * <p>Obsługiwane obszary:
- * <ul>
- *   <li><b>Publiczne</b> – strona logowania ({@code /login}), rejestracja ({@code /register}),
- *       strona informacyjna barbera ({@code /barber-info/{username}}).</li>
- *   <li><b>Panel klienta</b> – dashboard ({@code /client/dashboard}), rezerwacja wizyty
- *       ({@code /client/book}), interakcja ze stylami inspiracji.</li>
- *   <li><b>Panel barbera</b> – dashboard ({@code /barber/dashboard}), zarządzanie
- *       harmonogramem pracy, galerią zdjęć i stylami inspiracji.</li>
- * </ul>
- * </p>
- *
- * <p>Stałe {@code SERVICE_DURATION} i {@code SERVICE_PRICE} definiują czas trwania
- * i cenę poszczególnych usług, używane przy tworzeniu rezerwacji.</p>
+/*
+  Główny kontroler MVC aplikacji Barber obsługujący widoki webowe (Thymeleaf).
+
+  <p>Odpowiada za renderowanie stron HTML dla wszystkich użytkowników systemu:
+  klientów, barberów oraz gości. W odróżnieniu od kontrolerów REST ({@code /api/**})
+  zwraca nazwy szablonów Thymeleaf, które są renderowane przez serwer do HTML.</p>
+
+  <p>Obsługiwane obszary:
+  <ul>
+    <li><b>Publiczne</b> – strona logowania ({@code /login}), rejestracja ({@code /register}),
+        strona informacyjna barbera ({@code /barber-info/{username}}).</li>
+    <li><b>Panel klienta</b> – dashboard ({@code /client/dashboard}), rezerwacja wizyty
+        ({@code /client/book}), interakcja ze stylami inspiracji.</li>
+    <li><b>Panel barbera</b> – dashboard ({@code /barber/dashboard}), zarządzanie
+        harmonogramem pracy, galerią zdjęć i stylami inspiracji.</li>
+  </ul>
+  </p>
+
+  <p>Stałe {@code SERVICE_DURATION} i {@code SERVICE_PRICE} definiują czas trwania
+  i cenę poszczególnych usług, używane przy tworzeniu rezerwacji.</p>
  */
 @Controller
 public class MainController {
 
-    /** Repozytorium użytkowników. */
+    // Repozytorium użytkowników.
     private final UserRepo userRepo;
 
-    /** Repozytorium wizyt. */
+    // Repozytorium wizyt.
     private final AppointmentRepo appointmentRepo;
 
-    /** Koder BCrypt – używany przy rejestracji nowego konta. */
+    // Koder BCrypt – używany przy rejestracji nowego konta.
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    /** Repozytorium styli inspiracji. */
+    // Repozytorium styli inspiracji.
     private final InspirationStyleRepo inspirationStyleRepo;
 
-    /**
-     * Mapa czasu trwania poszczególnych usług w minutach.
-     * Klucz: nazwa usługi, wartość: czas trwania w minutach.
+    /*
+      Mapa czasu trwania poszczególnych usług w minutach.
+      Klucz: nazwa usługi, wartość: czas trwania w minutach.
      */
     private static final Map<String, Integer> SERVICE_DURATION = Map.of(
         "Włosy", 45,
@@ -73,10 +73,7 @@ public class MainController {
         "Wszystko", 90
     );
 
-    /**
-     * Mapa cen poszczególnych usług w złotych.
-     * Klucz: nazwa usługi, wartość: cena w PLN.
-     */
+
     private static final Map<String, Integer> SERVICE_PRICE = Map.of(
         "Włosy", 50,
         "Broda", 35,
@@ -85,7 +82,7 @@ public class MainController {
         "Wszystko", 120
     );
 
-    /**
+    /*
      * Konstruktor wstrzykujący wymagane zależności przez Spring.
      *
      * @param userRepo             repozytorium użytkowników
@@ -102,13 +99,13 @@ public class MainController {
         this.inspirationStyleRepo = inspirationStyleRepo;
     }
 
-    /**
-     * Przekierowuje zalogowanego użytkownika na odpowiedni dashboard w zależności od roli.
-     *
-     * <p>BARBER → {@code /barber/dashboard}, KLIENT → {@code /client/dashboard},
-     * niezalogowany → {@code /login}.</p>
-     *
-     * @return redirect na odpowiedni adres URL
+    /*
+      Przekierowuje zalogowanego użytkownika na odpowiedni dashboard w zależności od roli.
+
+      <p>BARBER → {@code /barber/dashboard}, KLIENT → {@code /client/dashboard},
+      niezalogowany → {@code /login}.</p>
+
+      @return redirect na odpowiedni adres URL
      */
     @GetMapping("/")
     public String index() {
@@ -121,21 +118,19 @@ public class MainController {
         return "redirect:/login";
     }
 
-    /**
-     * Wyświetla stronę logowania.
-     *
-     * @return nazwa szablonu Thymeleaf: {@code login}
+    /*
+      Wyświetla stronę logowania.
+      @return nazwa szablonu Thymeleaf: {@code login}
      */
     @GetMapping("/login")
     public String login() {
         return "login";
     }
 
-    /**
-     * Wyświetla formularz rejestracji nowego konta.
-     *
-     * @param model model Thymeleaf – dodawany pusty obiekt {@link User} dla formularza
-     * @return nazwa szablonu Thymeleaf: {@code register}
+    /*
+      Wyświetla formularz rejestracji nowego konta.
+      @param model model Thymeleaf – dodawany pusty obiekt {@link User} dla formularza
+      @return nazwa szablonu Thymeleaf: {@code register}
      */
     @GetMapping("/register")
     public String register(Model model) {
@@ -143,14 +138,14 @@ public class MainController {
         return "register";
     }
 
-    /**
-     * Przetwarza formularz rejestracji i tworzy nowe konto klienta.
-     *
-     * <p>Hasło jest hashowane BCryptem przed zapisem do bazy.
-     * Nowe konto otrzymuje automatycznie rolę {@code "KLIENT"}.</p>
-     *
-     * @param user dane użytkownika z formularza rejestracji
-     * @return redirect na stronę logowania
+    /*
+      Przetwarza formularz rejestracji i tworzy nowe konto klienta.
+
+      <p>Hasło jest hashowane BCryptem przed zapisem do bazy.
+      Nowe konto otrzymuje automatycznie rolę {@code "KLIENT"}.</p>
+
+      @param user dane użytkownika z formularza rejestracji
+      @return redirect na stronę logowania
      */
     @PostMapping("/register")
     public String registerUser(@ModelAttribute User user) {
@@ -160,11 +155,11 @@ public class MainController {
         return "redirect:/login";
     }
 
-    /**
-     * Wyświetla dashboard klienta z listą jego wizyt, dostępnych barberów i styli inspiracji.
-     *
-     * @param model model Thymeleaf wypełniany danymi dla widoku
-     * @return nazwa szablonu Thymeleaf: {@code client_dashboard}
+    /*
+      Wyświetla dashboard klienta z listą jego wizyt, dostępnych barberów i styli inspiracji.
+
+      @param model model Thymeleaf wypełniany danymi dla widoku
+      @return nazwa szablonu Thymeleaf: {@code client_dashboard}
      */
     @GetMapping("/client/dashboard")
     public String clientDashboard(Model model) {
@@ -178,25 +173,25 @@ public class MainController {
         return "client_dashboard";
     }
 
-    /**
-     * Przetwarza formularz rezerwacji wizyty przez klienta.
-     *
-     * <p>Walidacja przed zapisem:
-     * <ol>
-     *   <li>Minuta musi być wielokrotnością 15 (sloty co 15 minut).</li>
-     *   <li>Wybrany dzień musi być dniem roboczym barbera.</li>
-     *   <li>Godzina musi mieścić się w godzinach pracy barbera.</li>
-     *   <li>Termin nie może kolidować z istniejącą wizytą barbera (wykrywanie nakładania się).</li>
-     * </ol>
-     * W przypadku błędu – redirect z parametrem błędu (np. {@code ?error=Zajete}).
-     * Po sukcesie – redirect z parametrem {@code ?success}.</p>
-     *
-     * @param barberId    ID wybranego barbera
-     * @param date        data i godzina wizyty w formacie ISO (np. {@code 2025-06-15T10:00})
-     * @param serviceType rodzaj usługi (np. "Włosy", "Broda")
-     * @param notes       opcjonalne uwagi klienta
-     * @param model       model Thymeleaf (nieużywany bezpośrednio, ale wymagany przez Spring)
-     * @return redirect na dashboard klienta z odpowiednim parametrem
+    /*
+      Przetwarza formularz rezerwacji wizyty przez klienta.
+
+      <p>Walidacja przed zapisem:
+      <ol>
+        <li>Minuta musi być wielokrotnością 15 (sloty co 15 minut).</li>
+        <li>Wybrany dzień musi być dniem roboczym barbera.</li>
+        <li>Godzina musi mieścić się w godzinach pracy barbera.</li>
+        <li>Termin nie może kolidować z istniejącą wizytą barbera (wykrywanie nakładania się).</li>
+      </ol>
+      W przypadku błędu – redirect z parametrem błędu (np. {@code ?error=Zajete}).
+      Po sukcesie – redirect z parametrem {@code ?success}.</p>
+
+      @param barberId    ID wybranego barbera
+      @param date        data i godzina wizyty w formacie ISO (np. {@code 2025-06-15T10:00})
+      @param serviceType rodzaj usługi (np. "Włosy", "Broda")
+      @param notes       opcjonalne uwagi klienta
+      @param model       model Thymeleaf (nieużywany bezpośrednio, ale wymagany przez Spring)
+      @return redirect na dashboard klienta z odpowiednim parametrem
      */
     @PostMapping("/client/book")
     public String bookVisit(@RequestParam("barberId") Long barberId,
@@ -262,11 +257,11 @@ public class MainController {
         return "redirect:/client/dashboard?success";
     }
 
-    /**
-     * Wyświetla dashboard barbera z listą jego wizyt i styli inspiracji.
-     *
-     * @param model model Thymeleaf wypełniany danymi dla widoku
-     * @return nazwa szablonu Thymeleaf: {@code barber_dashboard}
+    /*
+      Wyświetla dashboard barbera z listą jego wizyt i styli inspiracji.
+
+      @param model model Thymeleaf wypełniany danymi dla widoku
+      @return nazwa szablonu Thymeleaf: {@code barber_dashboard}
      */
     @GetMapping("/barber/dashboard")
     public String barberDashboard(Model model) {
@@ -279,16 +274,16 @@ public class MainController {
         return "barber_dashboard";
     }
 
-    /**
-     * Aktualizuje godziny i dni pracy zalogowanego barbera.
-     *
-     * <p>Jeśli lista dni jest pusta lub null, pole {@code workDays} barbera
-     * zostaje ustawione na {@code null} (brak wybranych dni roboczych).</p>
-     *
-     * @param workStartHour godzina rozpoczęcia pracy
-     * @param workEndHour   godzina zakończenia pracy
-     * @param workDays      lista wybranych dni roboczych (1=Pn, ..., 7=Nd); może być null
-     * @return redirect na dashboard barbera z parametrem {@code ?hoursUpdated}
+    /*
+      Aktualizuje godziny i dni pracy zalogowanego barbera.
+
+      <p>Jeśli lista dni jest pusta lub null, pole {@code workDays} barbera
+      zostaje ustawione na {@code null} (brak wybranych dni roboczych).</p>
+
+      @param workStartHour godzina rozpoczęcia pracy
+      @param workEndHour   godzina zakończenia pracy
+      @param workDays      lista wybranych dni roboczych (1=Pn, ..., 7=Nd); może być null
+      @return redirect na dashboard barbera z parametrem {@code ?hoursUpdated}
      */
     @PostMapping("/barber/updateHours")
     public String updateWorkHours(@RequestParam("workStartHour") Integer workStartHour,
@@ -307,11 +302,11 @@ public class MainController {
         return "redirect:/barber/dashboard?hoursUpdated";
     }
 
-    /**
-     * Usuwa wizytę o podanym ID (dostępne tylko dla barbera).
-     *
-     * @param id identyfikator wizyty do usunięcia
-     * @return redirect na dashboard barbera
+    /*
+     Usuwa wizytę o podanym ID (dostępne tylko dla barbera).
+
+      @param id identyfikator wizyty do usunięcia
+      @return redirect na dashboard barbera
      */
     @PostMapping("/barber/appointment/delete/{id}")
     public String deleteVisit(@PathVariable("id") Long id) {
@@ -319,15 +314,15 @@ public class MainController {
         return "redirect:/barber/dashboard";
     }
 
-    /**
-     * Przełącza "lajk" klienta na styl inspiracji (dodaje lub usuwa).
-     *
-     * <p>Jeśli styl jest już na liście polubionych, zostaje usunięty;
-     * jeśli nie ma, zostaje dodany. Lista jest przechowywana jako
-     * string z wartościami oddzielonymi przecinkami w polu {@code likedStyles}.</p>
-     *
-     * @param styleId ID stylu inspiracji do przełączenia lajka
-     * @return tekst {@code "OK"} (odpowiedź AJAX)
+    /*
+      Przełącza "lajk" klienta na styl inspiracji (dodaje lub usuwa).
+
+      <p>Jeśli styl jest już na liście polubionych, zostaje usunięty;
+      jeśli nie ma, zostaje dodany. Lista jest przechowywana jako
+      string z wartościami oddzielonymi przecinkami w polu {@code likedStyles}.</p>
+
+      @param styleId ID stylu inspiracji do przełączenia lajka
+      @return tekst {@code "OK"} (odpowiedź AJAX)
      */
     @PostMapping("/client/like-style")
     @ResponseBody
@@ -350,13 +345,13 @@ public class MainController {
         return "OK";
     }
 
-    /**
-     * Zapisuje wybrany przez klienta "wygrywający" styl inspiracji.
-     *
-     * <p>Wygrywający styl to styl, który klient chce odwzorować na wizycie.</p>
-     *
-     * @param winnerStyle ID lub nazwa wybranego stylu
-     * @return tekst {@code "OK"} (odpowiedź AJAX)
+    /*
+      Zapisuje wybrany przez klienta "wygrywający" styl inspiracji.
+
+      <p>Wygrywający styl to styl, który klient chce odwzorować na wizycie.</p>
+
+      @param winnerStyle ID lub nazwa wybranego stylu
+      @return tekst {@code "OK"} (odpowiedź AJAX)
      */
     @PostMapping("/client/set-winner-style")
     @ResponseBody
@@ -368,15 +363,15 @@ public class MainController {
         return "OK";
     }
 
-    /**
-     * Zapisuje preferencje klienta wprowadzone przez barbera.
-     *
-     * <p>Barber może notatować preferencje konkretnego klienta (np. ulubiony styl
-     * strzyżenia, długość boku itp.), które będą widoczne przy kolejnych wizytach.</p>
-     *
-     * @param clientId          ID klienta, którego preferencje są aktualizowane
-     * @param clientPreferences tekst opisujący preferencje klienta
-     * @return redirect na dashboard barbera z parametrem {@code ?preferencesSaved}
+    /*
+      Zapisuje preferencje klienta wprowadzone przez barbera.
+
+      <p>Barber może notatować preferencje konkretnego klienta (np. ulubiony styl
+      strzyżenia, długość boku itp.), które będą widoczne przy kolejnych wizytach.</p>
+
+      @param clientId          ID klienta, którego preferencje są aktualizowane
+      @param clientPreferences tekst opisujący preferencje klienta
+      @return redirect na dashboard barbera z parametrem {@code ?preferencesSaved}
      */
     @PostMapping("/barber/client-preferences")
     public String saveClientPreferences(@RequestParam("clientId") Long clientId,
@@ -387,14 +382,14 @@ public class MainController {
         return "redirect:/barber/dashboard?preferencesSaved";
     }
 
-    /**
-     * Zwraca szczegółowe informacje o kliencie wraz z historią jego wizyt (JSON).
-     *
-     * <p>Używane przez JavaScript na dashboardzie barbera do wyświetlenia
-     * informacji o kliencie w modalu bez przeładowywania strony.</p>
-     *
-     * @param id ID klienta
-     * @return mapa z danymi klienta i listą jego wizyt (serializowana jako JSON)
+    /*
+      Zwraca szczegółowe informacje o kliencie wraz z historią jego wizyt (JSON).
+
+      <p>Używane przez JavaScript na dashboardzie barbera do wyświetlenia
+      informacji o kliencie w modalu bez przeładowywania strony.</p>
+
+      @param id ID klienta
+      @return mapa z danymi klienta i listą jego wizyt (serializowana jako JSON)
      */
     @GetMapping("/barber/client-details/{id}")
     @ResponseBody
@@ -423,15 +418,15 @@ public class MainController {
         );
     }
 
-    /**
-     * Wyszukuje klientów po nazwie lub loginie (JSON).
-     *
-     * <p>Filtruje listę wszystkich klientów (case-insensitive) i zwraca
-     * uproszczone dane (ID, name, username). Używane przez wyszukiwarkę
-     * na dashboardzie barbera.</p>
-     *
-     * @param query fraza wyszukiwania (min. 1 znak)
-     * @return lista map z danymi pasujących klientów
+    /*
+      Wyszukuje klientów po nazwie lub loginie (JSON).
+
+      <p>Filtruje listę wszystkich klientów (case-insensitive) i zwraca
+      uproszczone dane (ID, name, username). Używane przez wyszukiwarkę
+      na dashboardzie barbera.</p>
+
+      @param query fraza wyszukiwania (min. 1 znak)
+      @return lista map z danymi pasujących klientów
      */
     @GetMapping("/barber/search-clients")
     @ResponseBody
@@ -451,25 +446,25 @@ public class MainController {
         return result;
     }
 
-    /**
-     * Pomocnicza klasa DTO przechowująca dane certyfikatu barbera.
-     *
-     * <p>Używana wyłącznie w widoku publicznej strony barbera ({@code /barber-info/{username}})
-     * do wyświetlenia informacji o certyfikacie zawodowym.</p>
+    /*
+      Pomocnicza klasa DTO przechowująca dane certyfikatu barbera.
+
+      <p>Używana wyłącznie w widoku publicznej strony barbera ({@code /barber-info/{username}})
+      do wyświetlenia informacji o certyfikacie zawodowym.</p>
      */
     public static class CertInfo {
-        /** URL do obrazka certyfikatu. */
+        // URL do obrazka certyfikatu.
         private final String image;
 
-        /** Tytuł/nazwa certyfikatu. */
+        // Tytuł/nazwa certyfikatu.
         private final String title;
 
-        /** Opis certyfikatu i kwalifikacji, które potwierdza. */
+        // Opis certyfikatu i kwalifikacji, które potwierdza.
         private final String description;
 
-        /**
-         * Tworzy nowy obiekt informacji o certyfikacie.
-         *
+        /*
+          Tworzy nowy obiekt informacji o certyfikacie.
+
          * @param image       URL do zdjęcia/skanu certyfikatu
          * @param title       tytuł certyfikatu
          * @param description opis certyfikatu
@@ -480,27 +475,27 @@ public class MainController {
             this.description = description;
         }
 
-        /** @return URL do obrazka certyfikatu */
+
         public String getImage() { return image; }
 
-        /** @return tytuł certyfikatu */
+
         public String getTitle() { return title; }
 
-        /** @return opis certyfikatu */
+
         public String getDescription() { return description; }
     }
 
-    /**
-     * Wyświetla publiczną stronę informacyjną wybranego barbera.
-     *
-     * <p>Strona jest dostępna publicznie (bez logowania) pod adresem
-     * {@code /barber-info/{username}}. Zawiera profil barbera, godziny pracy,
-     * galerię i informacje o certyfikacie.</p>
-     *
-     * @param username nazwa użytkownika barbera
-     * @param model    model Thymeleaf wypełniany danymi barbera
-     * @return nazwa szablonu Thymeleaf: {@code barber_info} lub redirect na {@code /login}
-     *         jeśli barber nie istnieje
+    /*
+      Wyświetla publiczną stronę informacyjną wybranego barbera.
+
+      <p>Strona jest dostępna publicznie (bez logowania) pod adresem
+      {@code /barber-info/{username}}. Zawiera profil barbera, godziny pracy,
+      galerię i informacje o certyfikacie.</p>
+
+      @param username nazwa użytkownika barbera
+      @param model    model Thymeleaf wypełniany danymi barbera
+      @return nazwa szablonu Thymeleaf: {@code barber_info} lub redirect na {@code /login}
+              jeśli barber nie istnieje
      */
     @GetMapping("/barber-info/{username}")
     public String barberInfo(@PathVariable("username") String username, Model model) {
@@ -562,17 +557,17 @@ public class MainController {
         return "barber_info";
     }
 
-    /**
-     * Zapisuje wgrany plik na dysk i zwraca jego publiczny URL.
-     *
-     * <p>Plik jest zapisywany w katalogu {@code uploads/} w katalogu roboczym aplikacji.
-     * Nazwa pliku jest generowana losowo (UUID) z zachowaniem oryginalnego rozszerzenia,
-     * co chroni przed konfliktami nazw i atakami path traversal.</p>
-     *
-     * @param file wgrany plik multipart
-     * @return publiczny URL do pliku (np. {@code /uploads/abc123.jpg}) lub
-     *         {@code null} jeśli plik jest pusty
-     * @throws IOException w przypadku błędu zapisu pliku na dysk
+    /*
+      Zapisuje wgrany plik na dysk i zwraca jego publiczny URL.
+
+      <p>Plik jest zapisywany w katalogu {@code uploads/} w katalogu roboczym aplikacji.
+      Nazwa pliku jest generowana losowo (UUID) z zachowaniem oryginalnego rozszerzenia,
+      co chroni przed konfliktami nazw i atakami path traversal.</p>
+
+      @param file wgrany plik multipart
+      @return publiczny URL do pliku (np. {@code /uploads/abc123.jpg}) lub
+              {@code null} jeśli plik jest pusty
+      @throws IOException w przypadku błędu zapisu pliku na dysk
      */
     private String saveUploadedFile(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
@@ -594,14 +589,14 @@ public class MainController {
         return "/uploads/" + newFilename;
     }
 
-    /**
-     * Aktualizuje zdjęcie profilowe zalogowanego barbera.
-     *
-     * <p>Zapisuje przesłany plik na dysk i aktualizuje pole {@code photoUrl}
-     * w profilu barbera.</p>
-     *
-     * @param file wgrany plik ze zdjęciem profilowym
-     * @return redirect na dashboard barbera z parametrem sukcesu lub błędu
+    /*
+      Aktualizuje zdjęcie profilowe zalogowanego barbera.
+
+      <p>Zapisuje przesłany plik na dysk i aktualizuje pole {@code photoUrl}
+      w profilu barbera.</p>
+
+      @param file wgrany plik ze zdjęciem profilowym
+      @return redirect na dashboard barbera z parametrem sukcesu lub błędu
      */
     @PostMapping("/barber/profile/update-picture")
     public String updateProfilePicture(@RequestParam("profilePicture") MultipartFile file) {
@@ -620,14 +615,14 @@ public class MainController {
         return "redirect:/barber/dashboard?profilePictureUpdated";
     }
 
-    /**
-     * Dodaje nowe zdjęcie do galerii zalogowanego barbera.
-     *
-     * <p>Zapisuje przesłany plik na dysk i dodaje jego URL do listy
-     * {@code galleryImages} barbera.</p>
-     *
-     * @param file wgrany plik ze zdjęciem do galerii
-     * @return redirect na dashboard barbera z parametrem sukcesu lub błędu
+    /*
+      Dodaje nowe zdjęcie do galerii zalogowanego barbera.
+
+      <p>Zapisuje przesłany plik na dysk i dodaje jego URL do listy
+      {@code galleryImages} barbera.</p>
+
+      @param file wgrany plik ze zdjęciem do galerii
+      @return redirect na dashboard barbera z parametrem sukcesu lub błędu
      */
     @PostMapping("/barber/gallery/add")
     public String addGalleryPhoto(@RequestParam("galleryPhoto") MultipartFile file) {
@@ -646,14 +641,14 @@ public class MainController {
         return "redirect:/barber/dashboard?galleryPhotoAdded";
     }
 
-    /**
-     * Usuwa zdjęcie z galerii zalogowanego barbera.
-     *
-     * <p>Usuwa URL z listy galerii barbera w bazie danych oraz usuwa
-     * fizyczny plik z dysku (jeśli jest w katalogu {@code /uploads/}).</p>
-     *
-     * @param imageUrl URL zdjęcia do usunięcia (np. {@code /uploads/abc123.jpg})
-     * @return redirect na dashboard barbera z parametrem sukcesu
+    /*
+      Usuwa zdjęcie z galerii zalogowanego barbera.
+
+      <p>Usuwa URL z listy galerii barbera w bazie danych oraz usuwa
+      fizyczny plik z dysku (jeśli jest w katalogu {@code /uploads/}).</p>
+
+      @param imageUrl URL zdjęcia do usunięcia (np. {@code /uploads/abc123.jpg})
+      @return redirect na dashboard barbera z parametrem sukcesu
      */
     @PostMapping("/barber/gallery/delete")
     public String deleteGalleryPhoto(@RequestParam("imageUrl") String imageUrl) {
@@ -673,16 +668,16 @@ public class MainController {
         return "redirect:/barber/dashboard?galleryPhotoDeleted";
     }
 
-    /**
-     * Dodaje nowy styl inspiracji do systemu (przez barbera).
-     *
-     * <p>Barber może dodać nowe zdjęcie stylu fryzury lub zarostu,
-     * które będzie widoczne dla wszystkich klientów w sekcji inspiracji.</p>
-     *
-     * @param file     wgrany plik z obrazem stylu
-     * @param name     nazwa stylu (np. "Low Skin Fade")
-     * @param category kategoria stylu: {@code "hair"} lub {@code "beard"}
-     * @return redirect na dashboard barbera (sekcja inspiracji) z parametrem sukcesu lub błędu
+    /*
+      Dodaje nowy styl inspiracji do systemu (przez barbera).
+
+      <p>Barber może dodać nowe zdjęcie stylu fryzury lub zarostu,
+      które będzie widoczne dla wszystkich klientów w sekcji inspiracji.</p>
+
+      @param file     wgrany plik z obrazem stylu
+      @param name     nazwa stylu (np. "Low Skin Fade")
+      @param category kategoria stylu: {@code "hair"} lub {@code "beard"}
+      @return redirect na dashboard barbera (sekcja inspiracji) z parametrem sukcesu lub błędu
      */
     @PostMapping("/barber/inspirations/add")
     public String addInspirationStyle(@RequestParam("inspirationFile") MultipartFile file,
@@ -704,14 +699,14 @@ public class MainController {
         return "redirect:/barber/dashboard?inspirationAdded#screen-inspirations";
     }
 
-    /**
-     * Usuwa styl inspiracji o podanym ID.
-     *
-     * <p>Usuwa rekord z bazy danych oraz fizyczny plik z dysku
-     * (jeśli zdjęcie jest przechowywane lokalnie w katalogu {@code /uploads/}).</p>
-     *
-     * @param id ID stylu inspiracji do usunięcia
-     * @return redirect na dashboard barbera (sekcja inspiracji) z parametrem sukcesu
+    /*
+      Usuwa styl inspiracji o podanym ID.
+
+      <p>Usuwa rekord z bazy danych oraz fizyczny plik z dysku
+      (jeśli zdjęcie jest przechowywane lokalnie w katalogu {@code /uploads/}).</p>
+
+      @param id ID stylu inspiracji do usunięcia
+      @return redirect na dashboard barbera (sekcja inspiracji) z parametrem sukcesu
      */
     @PostMapping("/barber/inspirations/delete")
     public String deleteInspirationStyle(@RequestParam("id") Long id) {
