@@ -16,11 +16,11 @@ import java.util.Date;
   Klasa narzędziowa odpowiedzialna za wszystkie operacje na tokenach JWT
   (JSON Web Token) w aplikacji Barber.
 
-  <p>Jej główne zadania to:
-  <ul>
-    <li>Generowanie tokenu JWT po pomyślnym uwierzytelnieniu użytkownika.</li>
-    <li>Walidacja tokenu (sprawdzenie podpisu, czasu ważności i poprawności formatu).</li>
-    <li>Odczyt danych (username, role, czas ważności) zapisanych wewnątrz tokenu.</li>
+  Jej główne zadania to:
+
+    Generowanie tokenu JWT po pomyślnym uwierzytelnieniu użytkownika.
+    Walidacja tokenu (sprawdzenie podpisu, czasu ważności i poprawności formatu).
+    Odczyt danych (username, role, czas ważności) zapisanych wewnątrz tokenu.</li>
   </ul>
   Token jest podpisywany algorytmem HMAC-SHA256 z kluczem wczytywanym z pliku
   konfiguracyjnego ({@code application.properties}).
