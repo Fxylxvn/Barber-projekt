@@ -36,54 +36,53 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /** Filtr JWT wstrzykiwany przez Spring – dodawany do łańcucha filtrów. */
+    // Filtr JWT wstrzykiwany przez Spring – dodawany do łańcucha filtrów.
     private final AuthTokenFilter authTokenFilter;
 
-    /**
-     * Konstruktor wstrzykujący filtr JWT.
-     *
-     * @param authTokenFilter filtr sprawdzający tokeny JWT w nagłówkach żądań
+    /*
+      Konstruktor wstrzykujący filtr JWT.
+
+      @param authTokenFilter filtr sprawdzający tokeny JWT w nagłówkach żądań
      */
     public SecurityConfig(AuthTokenFilter authTokenFilter) {
         this.authTokenFilter = authTokenFilter;
     }
 
-    /**
-     * Udostępnia {@link AuthenticationManager} jako bean Springa.
-     *
-     * <p>Używany w {@link com.example.barber.controller.api.AuthRestController}
-     * do programowego uwierzytelniania użytkownika na podstawie loginu i hasła.</p>
-     *
-     * @param authConfig konfiguracja uwierzytelniania dostarczana przez Spring Security
-     * @return instancja {@link AuthenticationManager}
-     * @throws Exception jeśli nie uda się zbudować menedżera
+    /*
+      Udostępnia {@link AuthenticationManager} jako bean Springa.
+
+      <p>Używany w {@link com.example.barber.controller.api.AuthRestController}
+      do programowego uwierzytelniania użytkownika na podstawie loginu i hasła.</p>
+      @param authConfig konfiguracja uwierzytelniania dostarczana przez Spring Security
+      @return instancja {@link AuthenticationManager}
+      @throws Exception jeśli nie uda się zbudować menedżera
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    /**
-     * Konfiguruje łańcuch filtrów bezpieczeństwa HTTP.
-     *
-     * <p>Reguły dostępu:
-     * <ul>
-     *   <li>{@code /api/auth/**} – publiczny (logowanie i rejestracja przez API).</li>
-     *   <li>{@code /login, /register, /css/**, /js/**, /img/**, /barber-info/**, /uploads/**}
-     *       – publiczne (strony i zasoby statyczne).</li>
-     *   <li>{@code /api/users/**} – dla każdej zalogowanej roli.</li>
-     *   <li>{@code /api/tasks/**} – tylko ADMIN, MANAGER, BARBER.</li>
-     *   <li>{@code /api/reservations/**} – ADMIN, MANAGER, BARBER, KLIENT.</li>
-     *   <li>{@code /barber/**} – wyłącznie BARBER.</li>
-     *   <li>{@code /client/**} – wyłącznie KLIENT.</li>
-     *   <li>Wszystkie pozostałe żądania – wymagają zalogowania.</li>
-     * </ul>
-     * Filtr JWT jest wstawiany przed {@code UsernamePasswordAuthenticationFilter},
-     * dzięki czemu tokeny API są sprawdzane przed logowaniem sesyjnym.</p>
-     *
-     * @param http budowniczy konfiguracji HTTP Security dostarczany przez Spring
-     * @return zbudowany łańcuch filtrów {@link SecurityFilterChain}
-     * @throws Exception w przypadku błędu konfiguracji
+    /*
+      Konfiguruje łańcuch filtrów bezpieczeństwa HTTP.
+
+      <p>Reguły dostępu:
+      <ul>
+        <li>{@code /api/auth/**} – publiczny (logowanie i rejestracja przez API).</li>
+        <li>{@code /login, /register, /css/**, /js/**, /img/**, /barber-info/**, /uploads/**}
+            – publiczne (strony i zasoby statyczne).</li>
+        <li>{@code /api/users/**} – dla każdej zalogowanej roli.</li>
+        <li>{@code /api/tasks/**} – tylko ADMIN, MANAGER, BARBER.</li>
+        <li>{@code /api/reservations/**} – ADMIN, MANAGER, BARBER, KLIENT.</li>
+        <li>{@code /barber/**} – wyłącznie BARBER.</li>
+        <li>{@code /client/**} – wyłącznie KLIENT.</li>
+        <li>Wszystkie pozostałe żądania – wymagają zalogowania.</li>
+      </ul>
+      Filtr JWT jest wstawiany przed {@code UsernamePasswordAuthenticationFilter},
+      dzięki czemu tokeny API są sprawdzane przed logowaniem sesyjnym.</p>
+
+      @param http budowniczy konfiguracji HTTP Security dostarczany przez Spring
+      @return zbudowany łańcuch filtrów {@link SecurityFilterChain}
+      @throws Exception w przypadku błędu konfiguracji
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
