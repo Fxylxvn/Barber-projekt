@@ -300,6 +300,55 @@
         </main>
     </div>
 
+    <!-- ==================== CHATBOT WIDGET ==================== -->
+    <!-- Floating Action Button -->
+    <button class="chatbot-fab" id="chatbot-fab" onclick="toggleChatbot()" title="Asystent Salonu">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        </svg>
+    </button>
+
+    <!-- Chat Panel -->
+    <div class="chatbot-panel" id="chatbot-panel">
+        <!-- Header -->
+        <div class="chatbot-header">
+            <div class="chatbot-avatar">💈</div>
+            <div class="chatbot-header-info">
+                <div class="chatbot-header-name">Asystent Salonu</div>
+                <div class="chatbot-header-status">Online</div>
+            </div>
+            <button class="chatbot-close-btn" onclick="toggleChatbot()" title="Zamknij">✕</button>
+        </div>
+
+        <!-- Messages -->
+        <div class="chatbot-messages" id="chatbot-messages">
+            <!-- Welcome message -->
+            <div class="chatbot-bubble bot">
+                Cześć! Jestem asystentem salonu <strong>GENTLEMAN'S CLUB</strong>. 💈<br><br>
+                Mogę pomóc Ci w sprawach dotyczących salonu – barberów, wizyt, usług i dostępnych terminów.<br><br>
+                Jak mogę Ci pomóc?
+            </div>
+        </div>
+
+        <!-- Input Row -->
+        <div class="chatbot-input-row">
+            <textarea
+                class="chatbot-input"
+                id="chatbot-input"
+                placeholder="Napisz wiadomość..."
+                rows="1"
+                onkeydown="handleChatbotKey(event)"
+                oninput="autoResizeChatInput(this)"
+            ></textarea>
+            <button class="chatbot-send-btn" id="chatbot-send" onclick="sendChatbotMessage()" title="Wyślij">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <!-- ==================== END CHATBOT WIDGET ==================== -->
+
     <!-- JavaScript dynamic scripts -->
     <script th:inline="javascript">
         // Screen switching
@@ -702,6 +751,113 @@
             document.getElementById('tournament-result').style.display = 'none';
             document.getElementById('tournament-gameplay').style.display = 'none';
             document.getElementById('tournament-start').style.display = 'block';
+        }
+
+        // ==========================================
+        // CHATBOT LOGIC
+        // ==========================================
+        let chatbotOpen = false;
+        let chatbotBusy = false;
+
+        function toggleChatbot() {
+            chatbotOpen = !chatbotOpen;
+            const panel = document.getElementById('chatbot-panel');
+            if (chatbotOpen) {
+                panel.classList.add('chatbot-open');
+                document.getElementById('chatbot-input').focus();
+                scrollChatToBottom();
+            } else {
+                panel.classList.remove('chatbot-open');
+            }
+        }
+
+        function scrollChatToBottom() {
+            const msgs = document.getElementById('chatbot-messages');
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function autoResizeChatInput(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+        }
+
+        function handleChatbotKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatbotMessage();
+            }
+        }
+
+        function appendBubble(text, type) {
+            const msgs = document.getElementById('chatbot-messages');
+            const bubble = document.createElement('div');
+            bubble.className = 'chatbot-bubble ' + type;
+            // Allow simple line breaks from response
+            bubble.innerHTML = text.replace(/\n/g, '<br>');
+            msgs.appendChild(bubble);
+            scrollChatToBottom();
+            return bubble;
+        }
+
+        function showTypingIndicator() {
+            const msgs = document.getElementById('chatbot-messages');
+            const typing = document.createElement('div');
+            typing.className = 'chatbot-typing';
+            typing.id = 'chatbot-typing';
+            typing.innerHTML = '<span></span><span></span><span></span>';
+            msgs.appendChild(typing);
+            scrollChatToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const el = document.getElementById('chatbot-typing');
+            if (el) el.remove();
+        }
+
+        function sendChatbotMessage() {
+            if (chatbotBusy) return;
+            const inputEl = document.getElementById('chatbot-input');
+            const message = inputEl.value.trim();
+            if (!message) return;
+
+            // Show user bubble
+            appendBubble(message, 'user');
+            inputEl.value = '';
+            inputEl.style.height = 'auto';
+
+            // Lock UI
+            chatbotBusy = true;
+            document.getElementById('chatbot-send').disabled = true;
+            inputEl.disabled = true;
+
+            showTypingIndicator();
+
+            fetch('/api/chatbot/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            })
+            .then(res => res.json())
+            .then(data => {
+                hideTypingIndicator();
+                if (data.response) {
+                    appendBubble(data.response, 'bot');
+                } else if (data.error) {
+                    appendBubble('⚠️ ' + data.error, 'error');
+                } else {
+                    appendBubble('Nie otrzymałem odpowiedzi. Spróbuj ponownie.', 'error');
+                }
+            })
+            .catch(err => {
+                hideTypingIndicator();
+                appendBubble('⚠️ Błąd połączenia z asystentem. Sprawdź, czy Ollama jest uruchomiona.', 'error');
+            })
+            .finally(() => {
+                chatbotBusy = false;
+                document.getElementById('chatbot-send').disabled = false;
+                inputEl.disabled = false;
+                inputEl.focus();
+            });
         }
     </script>
 </body>
