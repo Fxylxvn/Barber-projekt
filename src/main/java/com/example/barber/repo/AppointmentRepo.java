@@ -43,4 +43,14 @@ public interface AppointmentRepo extends JpaRepository<Appointment, Long> {
       @return lista wszystkich wizyt barbera
      */
     List<Appointment> findByBarber(User barber);
+
+    /*
+      Zlicza wszystkie zakończone wizyty danego klienta (zalogowanego).
+      Używane do obliczania progresu programu lojalnościowego.
+
+      @param client zalogowany klient
+      @return liczba dotychczasowych wizyt klienta
+     */
+    long countByClient(User client);
 }
+

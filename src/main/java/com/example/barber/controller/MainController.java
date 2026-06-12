@@ -82,6 +82,43 @@ public class MainController {
         "Wszystko", 120
     );
 
+    // Dopłata dla gości niezalogowanych: +25% do ceny bazowej.
+    private static final double GUEST_PRICE_MULTIPLIER = 1.25;
+
+    // Zniżka lojalnościowa dla zalogowanych: co 5. wizyta -30%.
+    private static final double LOYALTY_DISCOUNT = 0.30;
+
+    // Co ile wizyt przyznawana jest zniżka lojalnościowa.
+    private static final int LOYALTY_INTERVAL = 5;
+
+    /* Oblicza cenę dla gościa (cena bazowa + 25%). */
+    private int calcGuestPrice(String serviceType) {
+        int base = SERVICE_PRICE.getOrDefault(serviceType, 50);
+        return (int) Math.ceil(base * GUEST_PRICE_MULTIPLIER);
+    }
+
+    /* Oblicza cenę z rabatem lojalnościowym (-30%). */
+    private int calcLoyaltyPrice(String serviceType) {
+        int base = SERVICE_PRICE.getOrDefault(serviceType, 50);
+        return (int) Math.ceil(base * (1 - LOYALTY_DISCOUNT));
+    }
+
+    /*
+     Sprawdza, czy kolejna wizyta klienta jest wizytą lojalnościową (co LOYALTY_INTERVAL wizyta).
+     Zlicza dotychczasowe wizyty i jeśli (count + 1) % LOYALTY_INTERVAL == 0, stosuje zniżkę.
+    */
+    private boolean isNextVisitLoyalty(User client) {
+        long count = appointmentRepo.countByClient(client);
+        return (count + 1) % LOYALTY_INTERVAL == 0;
+    }
+
+    /* Zwraca ile wizyt pozostało do następnej zniżki lojalnościowej. */
+    private long visitsUntilNextLoyalty(User client) {
+        long count = appointmentRepo.countByClient(client);
+        long remainder = LOYALTY_INTERVAL - ((count % LOYALTY_INTERVAL));
+        return remainder == LOYALTY_INTERVAL ? 0 : remainder;
+    }
+
     /*
      * Konstruktor wstrzykujący wymagane zależności przez Spring.
      *
@@ -138,6 +175,98 @@ public class MainController {
         return "register";
     }
 
+    // ── GUEST BOOKING (bez konta) ─────────────────────────────────────────────
+
+    /*
+      Wyświetla formularz rezerwacji dla gości (niezalogowanych).
+      Strona jest publicznie dostępna pod adresem {@code /book-guest}.
+     */
+    @GetMapping("/book-guest")
+    public String bookGuestPage(Model model) {
+        model.addAttribute("barbers", userRepo.findByRole("BARBER"));
+        model.addAttribute("allAppointments", appointmentRepo.findAll());
+        model.addAttribute("servicePrices", SERVICE_PRICE);
+        return "guest_book";
+    }
+
+    /*
+      Przetwarza formularz rezerwacji gościa (bez konta).
+
+      <p>Waliduje termin (godziny pracy, dni robocze, kolizje) identycznie jak
+      rezerwacja zalogowanego klienta. Cena jest wyższa o 25% względem ceny bazowej.
+      Dane gościa (imię, email, telefon) są zapisywane bezpośrednio na wizycie.</p>
+
+      @param barberId    ID wybranego barbera
+      @param date        data i godzina wizyty (format ISO)
+      @param serviceType rodzaj usługi
+      @param notes       opcjonalne uwagi
+      @param guestName   imię i nazwisko gościa
+      @param guestEmail  e-mail gościa
+      @param guestPhone  telefon gościa
+      @return redirect na /book-guest z parametrem sukcesu lub błędu
+     */
+    @PostMapping("/book-guest")
+    public String bookGuestVisit(@RequestParam("barberId") Long barberId,
+                                 @RequestParam("date") String date,
+                                 @RequestParam("serviceType") String serviceType,
+                                 @RequestParam(value = "notes", required = false) String notes,
+                                 @RequestParam("guestName") String guestName,
+                                 @RequestParam("guestEmail") String guestEmail,
+                                 @RequestParam("guestPhone") String guestPhone) {
+        User barber = userRepo.findById(barberId).orElseThrow();
+        LocalDateTime termin = LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+        // Walidacja: minuty co 15
+        if (termin.getMinute() % 15 != 0) {
+            return "redirect:/book-guest?error=NieprawidlowaMinuta";
+        }
+        // Walidacja: dzień roboczy
+        int dayOfWeek = termin.getDayOfWeek().getValue();
+        if (barber.getWorkDays() != null && !barber.getWorkDays().isEmpty()) {
+            if (!barber.getWorkDays().contains(String.valueOf(dayOfWeek))) {
+                return "redirect:/book-guest?error=DzienWolny";
+            }
+        }
+        // Walidacja: godziny pracy
+        int hour = termin.getHour();
+        if (barber.getWorkStartHour() != null && barber.getWorkEndHour() != null) {
+            if (hour < barber.getWorkStartHour() || hour >= barber.getWorkEndHour()) {
+                return "redirect:/book-guest?error=PozaGodzinami";
+            }
+        }
+        // Walidacja: kolizje
+        int duration = SERVICE_DURATION.getOrDefault(serviceType, 60);
+        LocalDateTime endTime = termin.plusMinutes(duration);
+        for (Appointment existing : appointmentRepo.findByBarber(barber)) {
+            LocalDateTime es = existing.getAppointmentDate();
+            int ed = existing.getDurationMinutes() != null ? existing.getDurationMinutes() : 60;
+            LocalDateTime ee = es.plusMinutes(ed);
+            if (termin.isBefore(ee) && endTime.isAfter(es)) {
+                return "redirect:/book-guest?error=Zajete";
+            }
+        }
+
+        // Cena gościa = baza + 25%
+        int price = calcGuestPrice(serviceType);
+
+        Appointment appt = new Appointment();
+        appt.setBarber(barber);
+        appt.setAppointmentDate(termin);
+        appt.setServiceType(serviceType);
+        appt.setDurationMinutes(duration);
+        appt.setDescription(serviceType);
+        appt.setNotes(notes);
+        appt.setGuest(true);
+        appt.setGuestName(guestName);
+        appt.setGuestEmail(guestEmail);
+        appt.setGuestPhone(guestPhone);
+        appt.setPriceCharged(price);
+        appt.setDiscountApplied(false);
+        appointmentRepo.save(appt);
+
+        return "redirect:/book-guest?success";
+    }
+
     /*
       Przetwarza formularz rejestracji i tworzy nowe konto klienta.
 
@@ -170,6 +299,16 @@ public class MainController {
         model.addAttribute("barbers", userRepo.findByRole("BARBER"));
         model.addAttribute("allAppointments", appointmentRepo.findAll());
         model.addAttribute("inspirationStyles", inspirationStyleRepo.findAll());
+
+        // System lojalnościowy
+        long visitCount = appointmentRepo.countByClient(client);
+        long untilNext = visitsUntilNextLoyalty(client);
+        boolean nextIsLoyalty = isNextVisitLoyalty(client);
+        model.addAttribute("visitCount", visitCount);
+        model.addAttribute("untilNextLoyalty", untilNext);
+        model.addAttribute("nextIsLoyalty", nextIsLoyalty);
+        model.addAttribute("servicePrices", SERVICE_PRICE);
+
         return "client_dashboard";
     }
 
@@ -243,6 +382,11 @@ public class MainController {
             }
         }
 
+        // Sprawdź czy to wizyta lojalnościowa (co 5. wizyta -30%)
+        boolean isLoyalty = isNextVisitLoyalty(client);
+        int price = isLoyalty ? calcLoyaltyPrice(serviceType)
+                              : SERVICE_PRICE.getOrDefault(serviceType, 50);
+
         // Utwórz i zapisz nową wizytę
         Appointment appointment = new Appointment();
         appointment.setClient(client);
@@ -252,6 +396,9 @@ public class MainController {
         appointment.setDurationMinutes(newServiceDuration);
         appointment.setDescription(serviceType);
         appointment.setNotes(notes);
+        appointment.setPriceCharged(price);
+        appointment.setDiscountApplied(isLoyalty);
+        appointment.setGuest(false);
         appointmentRepo.save(appointment);
 
         return "redirect:/client/dashboard?success";
