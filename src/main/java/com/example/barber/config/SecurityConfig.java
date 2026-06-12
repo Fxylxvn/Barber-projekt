@@ -13,10 +13,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Główna konfiguracja bezpieczeństwa aplikacji (Spring Security).
- *
- * <p>Definiuje:
+/*
+  Główna konfiguracja bezpieczeństwa aplikacji (Spring Security).
+
+  <p>Definiuje:
  * <ul>
  *   <li>Reguły dostępu do poszczególnych ścieżek URL (kto może co wywołać).</li>
  *   <li>Formularz logowania i wylogowania dla widoków webowych (Thymeleaf).</li>
@@ -121,14 +121,14 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Tworzy bean kodera haseł oparty na algorytmie BCrypt.
-     *
-     * <p>BCrypt automatycznie dodaje sól i jest odporny na ataki brute-force.
-     * Używany zarówno przy rejestracji (hashowanie hasła) jak i logowaniu
-     * (weryfikacja hasła wprowadzonego przez użytkownika).</p>
-     *
-     * @return instancja {@link BCryptPasswordEncoder}
+    /*
+      Tworzy bean kodera haseł oparty na algorytmie BCrypt.
+
+      <p>BCrypt automatycznie dodaje sól i jest odporny na ataki brute-force.
+      Używany zarówno przy rejestracji (hashowanie hasła) jak i logowaniu
+      (weryfikacja hasła wprowadzonego przez użytkownika).</p>
+
+      @return instancja {@link BCryptPasswordEncoder}
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
