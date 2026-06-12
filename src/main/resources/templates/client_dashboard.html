@@ -156,11 +156,11 @@
                         <div class="form-group">
                             <label for="serviceType">Usługa</label>
                             <select name="serviceType" id="serviceType" required>
-                                <option value="Włosy">Strzyżenie włosów (45 min) – <span th:text="${nextIsLoyalty} ? '35 zł ★' : '50 zł'">50 zł</span></option>
-                                <option value="Broda">Trymowanie brody (30 min) – <span th:text="${nextIsLoyalty} ? '25 zł ★' : '35 zł'">35 zł</span></option>
-                                <option value="Włosy + Broda">Combo: Włosy + Broda (75 min) – <span th:text="${nextIsLoyalty} ? '53 zł ★' : '75 zł'">75 zł</span></option>
-                                <option value="Klata">Golenie klatki piersiowej (15 min) – <span th:text="${nextIsLoyalty} ? '14 zł ★' : '20 zł'">20 zł</span></option>
-                                <option value="Wszystko">Królewski pakiet: Wszystko (90 min) – <span th:text="${nextIsLoyalty} ? '84 zł ★' : '120 zł'">120 zł</span></option>
+                                 <option value="Włosy" data-pln="50" data-pln-loyalty="35" th:text="${nextIsLoyalty} ? 'Strzyżenie włosów (45 min) – 35 zł ★' : 'Strzyżenie włosów (45 min) – 50 zł'">Strzyżenie włosów (45 min) – 50 zł</option>
+                                 <option value="Broda" data-pln="35" data-pln-loyalty="25" th:text="${nextIsLoyalty} ? 'Trymowanie brody (30 min) – 25 zł ★' : 'Trymowanie brody (30 min) – 35 zł'">Trymowanie brody (30 min) – 35 zł</option>
+                                 <option value="Włosy + Broda" data-pln="75" data-pln-loyalty="53" th:text="${nextIsLoyalty} ? 'Combo: Włosy + Broda (75 min) – 53 zł ★' : 'Combo: Włosy + Broda (75 min) – 75 zł'">Combo: Włosy + Broda (75 min) – 75 zł</option>
+                                 <option value="Klata" data-pln="20" data-pln-loyalty="14" th:text="${nextIsLoyalty} ? 'Golenie klatki piersiowej (15 min) – 14 zł ★' : 'Golenie klatki piersiowej (15 min) – 20 zł'">Golenie klatki piersiowej (15 min) – 20 zł</option>
+                                 <option value="Wszystko" data-pln="120" data-pln-loyalty="84" th:text="${nextIsLoyalty} ? 'Królewski pakiet: Wszystko (90 min) – 84 zł ★' : 'Królewski pakiet: Wszystko (90 min) – 120 zł'">Królewski pakiet: Wszystko (90 min) – 120 zł</option>
                             </select>
                         </div>
 
@@ -316,6 +316,7 @@
                                 <td>
                                     <span th:if="${v.priceCharged != null}" style="font-weight:700;"
                                           th:class="${v.discountApplied} ? 'loyalty-price' : 'normal-price'"
+                                          th:data-pln="${v.priceCharged}"
                                           th:text="${v.priceCharged} + ' zł'">50 zł</span>
                                     <span th:if="${v.discountApplied}" style="margin-left:6px;font-size:11px;color:var(--gold);font-weight:700;">-30% ★</span>
                                     <span th:if="${v.priceCharged == null}" style="color:var(--text-muted);">-</span>
@@ -897,6 +898,87 @@
                 inputEl.focus();
             });
         }
+
+        // Currency conversion logic
+        let currentCurrency = 'PLN';
+        let eurRate = 4.30;
+        const nextIsLoyalty = [[${nextIsLoyalty != null ? nextIsLoyalty : false}]];
+
+        async function fetchExchangeRate() {
+            try {
+                const res = await fetch('/api/exchange-rate/eur');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.rate) {
+                        eurRate = data.rate;
+                    }
+                }
+            } catch (e) {
+                console.error('Błąd pobierania kursu EUR:', e);
+            }
+        }
+
+        function formatPrice(amountPln) {
+            if (currentCurrency === 'EUR') {
+                const amountEur = (amountPln / eurRate).toFixed(2);
+                return amountEur + ' €';
+            }
+            return amountPln + ' zł';
+        }
+
+        function setCurrency(currency) {
+            currentCurrency = currency;
+            const btnPln = document.getElementById('currency-pln');
+            const btnEur = document.getElementById('currency-eur');
+            if (currency === 'EUR') {
+                btnEur.classList.remove('btn-secondary');
+                btnPln.classList.add('btn-secondary');
+            } else {
+                btnPln.classList.remove('btn-secondary');
+                btnEur.classList.add('btn-secondary');
+            }
+
+            // Update all elements with data-pln
+            document.querySelectorAll('[data-pln]').forEach(el => {
+                const plnVal = parseFloat(el.getAttribute('data-pln'));
+                if (!isNaN(plnVal)) {
+                    el.textContent = formatPrice(plnVal);
+                }
+            });
+
+            // Update options
+            updateServiceOptions();
+        }
+
+        function updateServiceOptions() {
+            const select = document.getElementById('serviceType');
+            if (!select) return;
+            const options = select.options;
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const plnBase = parseFloat(opt.getAttribute('data-pln'));
+                const plnLoyalty = parseFloat(opt.getAttribute('data-pln-loyalty'));
+                if (isNaN(plnBase)) continue;
+                
+                const price = nextIsLoyalty ? plnLoyalty : plnBase;
+                const priceStr = formatPrice(price);
+                
+                let serviceLabel = "";
+                switch(opt.value) {
+                    case "Włosy": serviceLabel = "Strzyżenie włosów (45 min) – " + priceStr + (nextIsLoyalty ? " ★" : ""); break;
+                    case "Broda": serviceLabel = "Trymowanie brody (30 min) – " + priceStr + (nextIsLoyalty ? " ★" : ""); break;
+                    case "Włosy + Broda": serviceLabel = "Combo: Włosy + Broda (75 min) – " + priceStr + (nextIsLoyalty ? " ★" : ""); break;
+                    case "Klata": serviceLabel = "Golenie klatki piersiowej (15 min) – " + priceStr + (nextIsLoyalty ? " ★" : ""); break;
+                    case "Wszystko": serviceLabel = "Królewski pakiet: Wszystko (90 min) – " + priceStr + (nextIsLoyalty ? " ★" : ""); break;
+                }
+                opt.textContent = serviceLabel;
+            }
+        }
+
+        // Initialize exchange rate
+        fetchExchangeRate().then(() => {
+            setCurrency('PLN');
+        });
     </script>
 </body>
 </html>
