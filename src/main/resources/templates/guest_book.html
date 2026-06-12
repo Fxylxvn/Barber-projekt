@@ -163,6 +163,10 @@
             <div class="logo-subtitle">Barber Club</div>
         </div>
         <div class="guest-header-links">
+            <div style="display:flex; align-items:center; gap:6px; margin-right:16px; border: 1px solid var(--border-color); padding: 4px; border-radius: var(--radius-md); background: rgba(0,0,0,0.2);">
+                <button type="button" id="currency-pln" class="premium-btn" style="padding:6px 12px; font-size:11px; min-width:auto; margin:0;" onclick="setCurrency('PLN')">PLN</button>
+                <button type="button" id="currency-eur" class="premium-btn btn-secondary" style="padding:6px 12px; font-size:11px; min-width:auto; margin:0; border:none;" onclick="setCurrency('EUR')">EUR</button>
+            </div>
             <a href="/login">Masz konto? Zaloguj się</a>
             <a href="/register">Zarejestruj się</a>
             <a href="/login" class="login-link">Zaloguj się →</a>
@@ -289,7 +293,7 @@
                     <!-- Cena i przycisk -->
                     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
                         <div id="price-display" style="display:flex;flex-direction:column;gap:4px;">
-                            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);">Cena za wizytę (gość)</div>
+                            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);" id="price-title-label">Cena za wizytę (gość)</div>
                             <div style="font-size:28px;font-family:var(--font-serif);color:#f87171;font-weight:700;" id="price-amount">– zł</div>
                             <div style="font-size:12px;color:var(--text-muted);" id="price-compare"></div>
                         </div>
@@ -322,33 +326,33 @@
                     <tbody>
                         <tr>
                             <td>Strzyżenie</td>
-                            <td class="price-guest-td">63 zł</td>
-                            <td class="price-member-td">50 zł</td>
-                            <td class="price-loyalty-td">35 zł</td>
+                            <td class="price-guest-td" data-pln="63">63 zł</td>
+                            <td class="price-member-td" data-pln="50">50 zł</td>
+                            <td class="price-loyalty-td" data-pln="35">35 zł</td>
                         </tr>
                         <tr>
                             <td>Broda</td>
-                            <td class="price-guest-td">44 zł</td>
-                            <td class="price-member-td">35 zł</td>
-                            <td class="price-loyalty-td">25 zł</td>
+                            <td class="price-guest-td" data-pln="44">44 zł</td>
+                            <td class="price-member-td" data-pln="35">35 zł</td>
+                            <td class="price-loyalty-td" data-pln="25">25 zł</td>
                         </tr>
                         <tr>
                             <td>Włosy + Broda</td>
-                            <td class="price-guest-td">94 zł</td>
-                            <td class="price-member-td">75 zł</td>
-                            <td class="price-loyalty-td">53 zł</td>
+                            <td class="price-guest-td" data-pln="94">94 zł</td>
+                            <td class="price-member-td" data-pln="75">75 zł</td>
+                            <td class="price-loyalty-td" data-pln="53">53 zł</td>
                         </tr>
                         <tr>
                             <td>Klata</td>
-                            <td class="price-guest-td">25 zł</td>
-                            <td class="price-member-td">20 zł</td>
-                            <td class="price-loyalty-td">14 zł</td>
+                            <td class="price-guest-td" data-pln="25">25 zł</td>
+                            <td class="price-member-td" data-pln="20">20 zł</td>
+                            <td class="price-loyalty-td" data-pln="14">14 zł</td>
                         </tr>
                         <tr>
                             <td>Pakiet ALL</td>
-                            <td class="price-guest-td">150 zł</td>
-                            <td class="price-member-td">120 zł</td>
-                            <td class="price-loyalty-td">84 zł</td>
+                            <td class="price-guest-td" data-pln="150">150 zł</td>
+                            <td class="price-member-td" data-pln="120">120 zł</td>
+                            <td class="price-loyalty-td" data-pln="84">84 zł</td>
                         </tr>
                     </tbody>
                 </table>
@@ -462,13 +466,58 @@
         if (sel.options.length <= 1) sel.innerHTML = '<option value="">-- Brak wolnych terminów --</option>';
     }
 
+    let currentCurrency = 'PLN';
+    let eurRate = 4.30;
+
+    async function fetchExchangeRate() {
+        try {
+            const res = await fetch('/api/exchange-rate/eur');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.rate) {
+                    eurRate = data.rate;
+                }
+            }
+        } catch (e) {
+            console.error('Błąd pobierania kursu EUR:', e);
+        }
+    }
+
+    function formatPrice(amountPln) {
+        if (currentCurrency === 'EUR') {
+            const amountEur = (amountPln / eurRate).toFixed(2);
+            return amountEur + ' €';
+        }
+        return amountPln + ' zł';
+    }
+
+    function setCurrency(currency) {
+        currentCurrency = currency;
+        const btnPln = document.getElementById('currency-pln');
+        const btnEur = document.getElementById('currency-eur');
+        if (currency === 'EUR') {
+            btnEur.classList.remove('btn-secondary');
+            btnPln.classList.add('btn-secondary');
+        } else {
+            btnPln.classList.remove('btn-secondary');
+            btnEur.classList.add('btn-secondary');
+        }
+
+        document.querySelectorAll('[data-pln]').forEach(el => {
+            const plnVal = parseFloat(el.getAttribute('data-pln'));
+            el.textContent = formatPrice(plnVal);
+        });
+
+        updateGuestPrice();
+    }
+
     function updateGuestPrice() {
         const service = document.getElementById('guestServiceType').value;
         const base = guestBasePrices[service] || 50;
         const guestPrice = Math.ceil(base * 1.25);
-        document.getElementById('price-amount').textContent = guestPrice + ' zł';
+        document.getElementById('price-amount').textContent = formatPrice(guestPrice);
         document.getElementById('price-compare').textContent =
-            'Cena dla zalogowanych: ' + base + ' zł (oszczędzasz ' + (guestPrice - base) + ' zł)';
+            'Cena dla zalogowanych: ' + formatPrice(base) + ' (oszczędzasz ' + formatPrice(guestPrice - base) + ')';
     }
 
     // Form submit
@@ -485,7 +534,9 @@
     });
 
     // Init
-    updateGuestPrice();
+    fetchExchangeRate().then(() => {
+        setCurrency('PLN');
+    });
 </script>
 </body>
 </html>

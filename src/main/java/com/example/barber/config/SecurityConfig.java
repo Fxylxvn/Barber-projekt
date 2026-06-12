@@ -89,7 +89,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/exchange-rate/**").permitAll()
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/barber-info/**", "/uploads/**", "/book-guest", "/book-guest/**").permitAll()
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER", "USER", "BARBER", "KLIENT")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER", "BARBER")
