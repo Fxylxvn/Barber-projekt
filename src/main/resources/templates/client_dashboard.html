@@ -265,7 +265,7 @@
 
                     <!-- Tournament Result -->
                     <div id="tournament-result" class="tournament-panel-desktop" style="display: none; flex-direction: column; align-items: center; gap: 24px;">
-                        <div style="font-size: 40px; margin-bottom: 8px;">🏆</div>
+                        <div style="font-size: 40px; margin-bottom: 8px;"></div>
                         <span style="font-size:12px; text-transform:uppercase; color:var(--gold); font-weight:700; letter-spacing:2px;">Wybrany styl idealny</span>
                         <h2 id="tournament-winner-name" style="font-family:var(--font-serif); font-size:32px; color:var(--gold);">Perfect Crop</h2>
                         
@@ -327,7 +327,7 @@
                             </tr>
                             <tr th:if="${#lists.isEmpty(appointments)}">
                                 <td colspan="5" style="text-align:center; padding:48px; color:var(--text-muted);">
-                                    <div style="font-size:36px; margin-bottom:16px;">📅</div>
+                                    <div style="font-size:36px; margin-bottom:16px;"></div>
                                     Brak zarezerwowanych wizyt. Przejdź do sekcji "Umów Wizytę", aby zarezerwować termin.
                                 </td>
                             </tr>
@@ -363,7 +363,7 @@
         <div class="chatbot-messages" id="chatbot-messages">
             <!-- Welcome message -->
             <div class="chatbot-bubble bot">
-                Cześć! Jestem asystentem salonu <strong>GENTLEMAN'S CLUB</strong>. 💈<br><br>
+                Cześć! Jestem asystentem salonu <strong>GENTLEMAN'S CLUB</strong>. <br><br>
                 Mogę pomóc Ci w sprawach dotyczących salonu – barberów, wizyt, usług i dostępnych terminów.<br><br>
                 Jak mogę Ci pomóc?
             </div>
@@ -390,7 +390,6 @@
 
     <!-- JavaScript dynamic scripts -->
     <script th:inline="javascript">
-        // Screen switching
         function switchScreen(screenId) {
             document.querySelectorAll('.desktop-screen').forEach(screen => {
                 screen.classList.remove('active');
@@ -882,14 +881,14 @@
                 if (data.response) {
                     appendBubble(data.response, 'bot');
                 } else if (data.error) {
-                    appendBubble('⚠️ ' + data.error, 'error');
+                    appendBubble('⚠ ' + data.error, 'error');
                 } else {
                     appendBubble('Nie otrzymałem odpowiedzi. Spróbuj ponownie.', 'error');
                 }
             })
             .catch(err => {
                 hideTypingIndicator();
-                appendBubble('⚠️ Błąd połączenia z asystentem. Sprawdź, czy Ollama jest uruchomiona.', 'error');
+                appendBubble('️ Błąd połączenia z asystentem. Sprawdź, czy Ollama jest uruchomiona.', 'error');
             })
             .finally(() => {
                 chatbotBusy = false;
