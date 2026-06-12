@@ -1,0 +1,267 @@
+package com.example.barber.controller.api;
+
+import com.example.barber.model.Appointment;
+import com.example.barber.model.InspirationStyle;
+import com.example.barber.model.User;
+import com.example.barber.repo.AppointmentRepo;
+import com.example.barber.repo.InspirationStyleRepo;
+import com.example.barber.repo.UserRepo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+
+/*
+  Kontroler REST obsługujący chatbota AI dla klientów salonu.
+
+  <p>Dostępny pod ścieżką {@code POST /api/chatbot/message}. Wymagana rola:
+  KLIENT. Komunikuje się z lokalnym modelem Ollama (llama3.2:3b)
+  pod adresem {@code http://localhost:11434}.</p>
+
+  <p>Przed każdym zapytaniem do LLM buduje dynamiczny system prompt
+  zawierający aktualne dane z bazy: barberów, ich harmonogramy, dostępne
+  usługi, wizyty klienta oraz style inspiracji. Dzięki temu chatbot
+  odpowiada wyłącznie na pytania dotyczące salonu.</p>
+ */
+@RestController
+@RequestMapping("/api/chatbot")
+public class ChatbotController {
+
+    private static final String OLLAMA_URL = "http://localhost:11434/api/chat";
+    private static final String MODEL_NAME = "llama3.2:3b";
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+    private final UserRepo userRepo;
+    private final AppointmentRepo appointmentRepo;
+    private final InspirationStyleRepo inspirationStyleRepo;
+    private final ObjectMapper objectMapper;
+
+    public ChatbotController(UserRepo userRepo,
+                             AppointmentRepo appointmentRepo,
+                             InspirationStyleRepo inspirationStyleRepo,
+                             ObjectMapper objectMapper) {
+        this.userRepo = userRepo;
+        this.appointmentRepo = appointmentRepo;
+        this.inspirationStyleRepo = inspirationStyleRepo;
+        this.objectMapper = objectMapper;
+    }
+
+    /*
+      Przetwarza wiadomość klienta i zwraca odpowiedź chatbota.
+
+      <p>Buduje kontekst z bazy danych (barberzy, wizyty, style)
+      i przesyła go jako system prompt do Ollamy. Model odpowiada
+      wyłącznie w zakresie tematycznym salonu.</p>
+
+      @param body   mapa z kluczem {@code "message"} zawierającym pytanie klienta
+      @param auth   dane uwierzytelnienia zalogowanego klienta
+      @return JSON {@code { "response": "..." }} lub błąd
+     */
+    @PostMapping("/message")
+    public ResponseEntity<?> chat(@RequestBody Map<String, String> body,
+                                  Authentication auth) {
+        String userMessage = body.get("message");
+        if (userMessage == null || userMessage.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Wiadomość nie może być pusta."));
+        }
+
+        // Pobierz zalogowanego klienta
+        User client = userRepo.findByUsername(auth.getName());
+        if (client == null) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("error", "Nie znaleziono klienta."));
+        }
+
+        // Zbuduj kontekst z bazy danych
+        String systemPrompt = buildSystemPrompt(client);
+
+        // Wywołaj Ollama API
+        try {
+            String ollamaResponse = callOllama(systemPrompt, userMessage);
+            return ResponseEntity.ok(Map.of("response", ollamaResponse));
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(503)
+                    .body(Map.of("error",
+                            "Nie mogę połączyć się z asystentem. Upewnij się, że Ollama jest uruchomiona."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "Błąd wewnętrzny chatbota: " + e.getMessage()));
+        }
+    }
+
+    /*
+      Buduje system prompt zawierający dane kontekstowe salonu i klienta.
+     */
+    private String buildSystemPrompt(User client) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Jesteś pomocnym asystentem salonu fryzjerskiego GENTLEMAN'S CLUB Barber Club. ");
+        sb.append("Odpowiadasz WYŁĄCZNIE na pytania związane z tym salonem: barberów, wizyt, usług, ");
+        sb.append("harmonogramów pracy i stylów inspiracji. ");
+        sb.append("Jeśli pytanie nie dotyczy salonu, uprzejmie poinformuj, że możesz pomóc tylko w sprawach salonu. ");
+        sb.append("Odpowiadaj zawsze po polsku, zwięźle i pomocnie.\n\n");
+
+        // === DOSTĘPNE USŁUGI ===
+        sb.append("=== DOSTĘPNE USŁUGI I CENY ===\n");
+        sb.append("- Strzyżenie włosów: 45 min, 50 zł\n");
+        sb.append("- Trymowanie brody: 30 min, 35 zł\n");
+        sb.append("- Combo: Włosy + Broda: 75 min, 75 zł\n");
+        sb.append("- Golenie klatki piersiowej: 15 min, 20 zł\n");
+        sb.append("- Królewski pakiet (Wszystko): 90 min, 120 zł\n\n");
+
+        // === BARBERZY ===
+        List<User> barbers = userRepo.findByRole("BARBER");
+        sb.append("=== BARBERZY SALONU ===\n");
+        for (User barber : barbers) {
+            sb.append("- ").append(barber.getName());
+            if (barber.getTitle() != null) {
+                sb.append(" (").append(barber.getTitle()).append(")");
+            }
+            if (barber.getRating() != null) {
+                sb.append(", ocena: ").append(barber.getRating()).append("/5.0");
+            }
+            if (barber.getWorkStartHour() != null && barber.getWorkEndHour() != null) {
+                sb.append(", godziny pracy: ")
+                  .append(barber.getWorkStartHour()).append(":00 - ")
+                  .append(barber.getWorkEndHour()).append(":00");
+            }
+            if (barber.getWorkDays() != null && !barber.getWorkDays().isEmpty()) {
+                sb.append(", dni pracy: ").append(formatWorkDays(barber.getWorkDays()));
+            }
+            if (barber.getBio() != null) {
+                sb.append("\n  Opis: ").append(barber.getBio());
+            }
+            sb.append("\n");
+        }
+        sb.append("\n");
+
+        // === WIZYTY KLIENTA ===
+        List<Appointment> appointments = appointmentRepo.findByClient(client);
+        sb.append("=== WIZYTY KLIENTA: ").append(client.getName()).append(" ===\n");
+        if (appointments.isEmpty()) {
+            sb.append("Klient nie ma żadnych zarezerwowanych wizyt.\n");
+        } else {
+            for (Appointment appt : appointments) {
+                sb.append("- Data: ").append(appt.getAppointmentDate().format(DATE_FMT));
+                sb.append(", Usługa: ").append(appt.getServiceType());
+                sb.append(", Czas: ").append(appt.getDurationMinutes()).append(" min");
+                if (appt.getBarber() != null) {
+                    sb.append(", Barber: ").append(appt.getBarber().getName());
+                }
+                if (appt.getNotes() != null && !appt.getNotes().isBlank()) {
+                    sb.append(", Uwagi: ").append(appt.getNotes());
+                }
+                sb.append("\n");
+            }
+        }
+        sb.append("\n");
+
+        // === STYLE INSPIRACJI ===
+        List<InspirationStyle> styles = inspirationStyleRepo.findAll();
+        sb.append("=== DOSTĘPNE STYLE INSPIRACJI ===\n");
+        long hairCount = styles.stream().filter(s -> "hair".equals(s.getCategory())).count();
+        long beardCount = styles.stream().filter(s -> "beard".equals(s.getCategory())).count();
+        sb.append("Fryzury (").append(hairCount).append("): ");
+        styles.stream().filter(s -> "hair".equals(s.getCategory()))
+              .forEach(s -> sb.append(s.getName()).append(", "));
+        sb.append("\nZarosty i brody (").append(beardCount).append("): ");
+        styles.stream().filter(s -> "beard".equals(s.getCategory()))
+              .forEach(s -> sb.append(s.getName()).append(", "));
+        sb.append("\n\n");
+
+        // === PREFERENCJE KLIENTA (jeśli istnieją) ===
+        if (client.getWinnerStyle() != null && !client.getWinnerStyle().isBlank()) {
+            sb.append("=== WYBRANY STYL KLIENTA ===\n");
+            sb.append("Klient wybrał styl: ").append(client.getWinnerStyle()).append("\n\n");
+        }
+
+        sb.append("Pamiętaj: odpowiadaj TYLKO po polsku i TYLKO w zakresie tematycznym salonu.");
+
+        return sb.toString();
+    }
+
+    /*
+      Konwertuje ciąg numerów dni (np. "1,2,3,4,5") na polskie nazwy dni tygodnia.
+     */
+    private String formatWorkDays(String workDays) {
+        String[] parts = workDays.split(",");
+        StringBuilder days = new StringBuilder();
+        for (String d : parts) {
+            switch (d.trim()) {
+                case "1" -> days.append("Pon, ");
+                case "2" -> days.append("Wt, ");
+                case "3" -> days.append("Śr, ");
+                case "4" -> days.append("Czw, ");
+                case "5" -> days.append("Pt, ");
+                case "6" -> days.append("Sob, ");
+                case "7" -> days.append("Nd, ");
+            }
+        }
+        String result = days.toString();
+        if (result.endsWith(", ")) {
+            result = result.substring(0, result.length() - 2);
+        }
+        return result;
+    }
+
+    /*
+      Wywołuje Ollama REST API i zwraca odpowiedź tekstową modelu.
+
+      @param systemPrompt kontekst systemowy z danymi salonu
+      @param userMessage  wiadomość wpisana przez klienta
+      @return odpowiedź modelu jako string
+      @throws IOException          gdy nie można połączyć się z Ollamą
+      @throws InterruptedException gdy połączenie zostało przerwane
+     */
+    @SuppressWarnings("unchecked")
+    private String callOllama(String systemPrompt, String userMessage)
+            throws IOException, InterruptedException {
+
+        // Buduj JSON request dla Ollama /api/chat
+        Map<String, Object> requestBody = Map.of(
+                "model", MODEL_NAME,
+                "stream", false,
+                "messages", List.of(
+                        Map.of("role", "system", "content", systemPrompt),
+                        Map.of("role", "user", "content", userMessage)
+                )
+        );
+
+        String requestJson = objectMapper.writeValueAsString(requestBody);
+
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(OLLAMA_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request,
+                HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IOException("Ollama zwróciła błąd HTTP: " + response.statusCode());
+        }
+
+        // Odczytaj odpowiedź: { "message": { "content": "..." } }
+        Map<String, Object> responseMap = objectMapper.readValue(response.body(), Map.class);
+        Map<String, Object> message = (Map<String, Object>) responseMap.get("message");
+        if (message == null) {
+            throw new IOException("Brak pola 'message' w odpowiedzi Ollamy.");
+        }
+        Object content = message.get("content");
+        return content != null ? content.toString() : "Brak odpowiedzi od modelu.";
+    }
+}

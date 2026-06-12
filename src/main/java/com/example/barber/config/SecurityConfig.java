@@ -94,6 +94,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER", "USER", "BARBER", "KLIENT")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER", "BARBER")
                         .requestMatchers("/api/reservations/**").hasAnyRole("ADMIN", "MANAGER", "BARBER", "KLIENT")
+                        .requestMatchers("/api/chatbot/**").hasRole("KLIENT")
                         .requestMatchers("/barber/**").hasRole("BARBER")
                         .requestMatchers("/client/**").hasRole("KLIENT")
                         .anyRequest().authenticated()
