@@ -15,19 +15,15 @@ import org.springframework.web.bind.annotation.*;
 /*
   Kontroler REST obsługujący uwierzytelnianie i rejestrację użytkowników przez API.
 
-  <p>Dostępny pod ścieżką bazową {@code /api/auth}. Wszystkie endpointy są publiczne
-  (nie wymagają wcześniejszego zalogowania) – patrz konfiguracja w
-  {@link com.example.barber.config.SecurityConfig}.</p>
+  Dostępny pod ścieżką bazową {@code /api/auth}. Wszystkie endpointy są publiczne
+  (nie wymagają wcześniejszego zalogowania)
 
-  <p>Obsługuje dwa przepływy:
-  <ul>
-    <li><b>Logowanie</b> ({@code POST /api/auth/login}) – weryfikacja hasła i zwrot tokenu JWT.</li>
-    <li><b>Rejestracja</b> ({@code POST /api/auth/register}) – tworzenie nowego konta klienta.</li>
-  </ul>
-  </p>
+ Obsługuje dwa przepływy:
 
-  <p>{@code @CrossOrigin(origins = "*")} pozwala na wywołania z dowolnej domeny
-  (przydatne podczas developmentu frontendu).</p>
+    Logowanie ({@code POST /api/auth/login}) – weryfikacja hasła i zwrot tokenu JWT.
+    <Rejestracja({@code POST /api/auth/register}) – tworzenie nowego konta klienta.
+
+  {@code @CrossOrigin(origins = "*")} pozwala na wywołania z dowolnej domeny
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -58,14 +54,14 @@ public class AuthRestController {
     /*
       Uwierzytelnia użytkownika i zwraca token JWT.
 
-      <p>Przepływ:
-      <ol>
-        <li>Spring Security weryfikuje login i hasło BCrypt.</li>
-        <li>Po sukcesie generowany jest token JWT zawierający login i role.</li>
-        <li>Token jest zwracany w obiekcie {@link JwtResponse} (JSON).</li>
-      </ol>
+     Przepływ:
+
+       Spring Security weryfikuje login i hasło BCrypt.
+       Po sukcesie generowany jest token JWT zawierający login i rle.
+       Token jest zwracany w obiekcie {@link JwtResponse} (JSON).
+
       Klient musi dołączyć otrzymany token do kolejnych żądań
-      w nagłówku {@code Authorization: Bearer <token>}.</p>
+      w nagłówku {@code Authorization: Bearer <token>}.
 
       @param loginRequest ciało żądania z polami {@code username} i {@code password}
       @return {@code 200 OK} z {@link JwtResponse} zawierającym token, login i rolę
@@ -85,11 +81,11 @@ public class AuthRestController {
     /*
       Rejestruje nowego użytkownika w systemie z rolą KLIENT.
 
-      <p>Jeśli podana nazwa użytkownika jest już zajęta, zwracany jest błąd 400.
-      Nowo zarejestrowany użytkownik ma automatycznie przypisaną rolę {@code "KLIENT"}.</p>
+      Jeśli podana nazwa użytkownika jest już zajęta, zwracany jest błąd 400.
+      Nowo zarejestrowany użytkownik ma automatycznie przypisaną rolę {@code "KLIENT"}.
 
-      <p><b>Uwaga:</b> Hasło jest tutaj zapisywane bez hashowania – w środowisku produkcyjnym
-      należy dodać kodowanie BCrypt przed zapisem.</p>
+      Hasło jest tutaj zapisywane bez hashowania – w środowisku produkcyjnym
+      należy dodać kodowanie BCrypt przed zapisem.
 
       @param user obiekt użytkownika deserializowany z ciała żądania JSON
       @return {@code 200 OK} z komunikatem sukcesu lub {@code 400 Bad Request}

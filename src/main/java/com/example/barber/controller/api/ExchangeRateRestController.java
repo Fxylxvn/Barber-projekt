@@ -25,8 +25,7 @@ public class ExchangeRateRestController {
 
     /*
       Pobiera aktualny kurs średni EUR z tabeli A NBP.
-      
-      @return JSON zawierający kurs (np. { "rate": 4.2851, "source": "NBP" })
+      @return JSON zawierający kurs
      */
     @GetMapping("/eur")
     public ResponseEntity<?> getEurRate() {
@@ -54,8 +53,7 @@ public class ExchangeRateRestController {
     }
 
     /*
-      Ręczna ekstrakcja kursu "mid" z odpowiedzi JSON z NBP.
-      Przykładowy format: ... "mid":4.2543 ...
+
      */
     private double extractRateFromJson(String json) throws Exception {
         String searchKey = "\"mid\":";

@@ -46,10 +46,10 @@ public class SecurityConfig {
     /*
       Konfiguruje łańcuch filtrów bezpieczeństwa HTTP.
 
-      <p>Reguły dostępu:
+      Reguły dostępu:
 
       Filtr JWT jest wstawiany przed {@code UsernamePasswordAuthenticationFilter},
-      dzięki czemu tokeny API są sprawdzane przed logowaniem sesyjnym.</p>
+      dzięki czemu tokeny API są sprawdzane przed logowaniem sesyjnym.
 
       @param http budowniczy konfiguracji HTTP Security dostarczany przez Spring
       @return zbudowany łańcuch filtrów {@link SecurityFilterChain}
@@ -61,7 +61,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/exchange-rate/**").permitAll()
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/barber-info/**", "/uploads/**", "/book-guest", "/book-guest/**").permitAll()
+                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/barber-info/**", "/uploads/**", "/book-guest", "/book-guest/**", "/h2-console/**").permitAll()
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MANAGER", "USER", "BARBER", "KLIENT")
                         .requestMatchers("/api/tasks/**").hasAnyRole("ADMIN", "MANAGER", "BARBER")
                         .requestMatchers("/api/reservations/**").hasAnyRole("ADMIN", "MANAGER", "BARBER", "KLIENT")
@@ -95,7 +95,7 @@ public class SecurityConfig {
     /*
       Tworzy bean kodera haseł oparty na algorytmie BCrypt.
 
-      <p>BCrypt automatycznie dodaje sól i jest odporny na ataki brute-force.
+      Crypt automatycznie dodaje sól i jest odporny na ataki brute-force.
       Używany zarówno przy rejestracji (hashowanie hasła) jak i logowaniu
       (weryfikacja hasła wprowadzonego przez użytkownika).</p>
 

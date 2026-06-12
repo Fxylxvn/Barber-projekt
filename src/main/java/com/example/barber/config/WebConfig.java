@@ -18,10 +18,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     /*
      Rejestruje handler zasobów dla uploadeowanych plików.
-
-      <p>Każde żądanie pasujące do {@code /uploads/**} zostanie obsłużone
-      przez pliki z katalogu {@code <katalog_roboczy>/uploads/} na dysku.
-
       @param registry
      */
     @Override

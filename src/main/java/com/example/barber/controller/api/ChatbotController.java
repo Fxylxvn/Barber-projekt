@@ -55,9 +55,9 @@ public class ChatbotController {
     /*
       Przetwarza wiadomość klienta i zwraca odpowiedź chatbota.
 
-      <p>Buduje kontekst z bazy danych (barberzy, wizyty, style)
+      Buduje kontekst z bazy danych (barberzy, wizyty, style)
       i przesyła go jako system prompt do Ollamy. Model odpowiada
-      wyłącznie w zakresie tematycznym salonu.</p>
+      wyłącznie w zakresie tematycznym salonu.
 
       @param body   mapa z kluczem {@code "message"} zawierającym pytanie klienta
       @param auth   dane uwierzytelnienia zalogowanego klienta

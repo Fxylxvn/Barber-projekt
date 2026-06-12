@@ -103,11 +103,11 @@ public class ReservationRestController {
 
       <p>Usunięcie jest możliwe tylko jeśli zalogowany użytkownik jest:
       <ul>
-        <li>Administratorem (rola ADMIN), lub</li>
-        <li>Klientem, który tę wizytę zarezerwował, lub</li>
-        <li>Barberem przypisanym do tej wizyty.</li>
-      </ul>
-      W przeciwnym razie zwracany jest błąd {@code 403 Forbidden}.</p>
+        Administratorem (rola ADMIN), lub
+        Klientem, który tę wizytę zarezerwował, lub
+       Barberem przypisanym do tej wizyty.
+
+      W przeciwnym razie zwracany jest błąd {@code 403 Forbidden}.
 
       @param id   identyfikator rezerwacji do usunięcia
       @param auth dane uwierzytelnienia zalogowanego użytkownika
